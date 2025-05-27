@@ -1,57 +1,67 @@
 <?php
+require 'conexion.php';
+
 header('Content-Type: application/json');
-require_once 'conexion.php';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $codigo = $_POST['codigo'] ?? '';
-    $nombre = $_POST['nombre'] ?? '';
-    $precio = $_POST['precio'] ?? 0;
-    $stock = $_POST['stock'] ?? 0;
-    $foto = $_POST['foto'] ?? '';
-
+try {
     // Validar que todos los campos requeridos estén presentes
-    if (empty($codigo) || empty($nombre) || empty($precio) || empty($stock) || empty($foto)) {
-        echo json_encode(['error' => 'Todos los campos son requeridos']);
-        exit;
+    if (empty($_POST['codigo']) || empty($_POST['nombre']) || empty($_POST['precio']) || empty($_POST['stock'])) {
+        throw new Exception('Todos los campos son requeridos');
     }
 
-    // Verificar si ya existe un producto con el mismo código
-    $sql_check = "SELECT id FROM productos WHERE codigo = ?";
-    $stmt_check = $conexion->prepare($sql_check);
-    $stmt_check->bind_param("s", $codigo);
-    $stmt_check->execute();
-    $result_check = $stmt_check->get_result();
-
-    if ($result_check->num_rows > 0) {
-        echo json_encode(['error' => 'Ya existe un producto con ese código']);
-        exit;
+    // Validar que precio y stock sean números válidos
+    if (!is_numeric($_POST['precio']) || floatval($_POST['precio']) <= 0) {
+        throw new Exception('El precio debe ser un número válido mayor a 0');
     }
 
-    // Insertar el nuevo producto
+    if (!is_numeric($_POST['stock']) || intval($_POST['stock']) < 0) {
+        throw new Exception('El stock debe ser un número válido mayor o igual a 0');
+    }
+
+    $codigo = $_POST['codigo'];
+    $nombre = $_POST['nombre'];
+    $precio = floatval($_POST['precio']);
+    $stock = intval($_POST['stock']);
+    $foto = '';
+
+    // Procesar la imagen si se subió una
+    if (isset($_FILES['foto']) && $_FILES['foto']['error'] === UPLOAD_ERR_OK) {
+        $uploadDir = 'uploads/productos/';
+        
+        // Crear el directorio si no existe
+        if (!file_exists($uploadDir)) {
+            mkdir($uploadDir, 0777, true);
+        }
+
+        $fileExtension = strtolower(pathinfo($_FILES['foto']['name'], PATHINFO_EXTENSION));
+        $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif'];
+
+        if (!in_array($fileExtension, $allowedExtensions)) {
+            throw new Exception('Solo se permiten archivos de imagen (JPG, JPEG, PNG, GIF)');
+        }
+
+        // Generar un nombre único para el archivo
+        $foto = uniqid() . '.' . $fileExtension;
+        $uploadFile = $uploadDir . $foto;
+
+        if (!move_uploaded_file($_FILES['foto']['tmp_name'], $uploadFile)) {
+            throw new Exception('Error al subir la imagen');
+        }
+    }
+
+    // Insertar en la base de datos
     $sql = "INSERT INTO productos (codigo, nombre, precio, stock, foto) VALUES (?, ?, ?, ?, ?)";
     $stmt = $conexion->prepare($sql);
-    $stmt->bind_param("sssss", $codigo, $nombre, $precio, $stock, $foto);
+    $stmt->bind_param("ssdis", $codigo, $nombre, $precio, $stock, $foto);
 
-    if ($stmt->execute()) {
-        echo json_encode([
-            'success' => true,
-            'message' => 'Producto agregado correctamente',
-            'producto' => [
-                'id' => $stmt->insert_id,
-                'codigo' => $codigo,
-                'nombre' => $nombre,
-                'precio' => $precio,
-                'stock' => $stock,
-                'foto' => $foto
-            ]
-        ]);
-    } else {
-        echo json_encode(['error' => 'Error al agregar el producto: ' . $conexion->error]);
+    if (!$stmt->execute()) {
+        throw new Exception('Error al insertar el producto: ' . $stmt->error);
     }
 
-    $stmt->close();
-} else {
-    echo json_encode(['error' => 'Método no permitido']);
+    echo json_encode(['success' => true, 'message' => 'Producto agregado exitosamente']);
+
+} catch (Exception $e) {
+    echo json_encode(['error' => $e->getMessage()]);
 }
 
 $conexion->close();

@@ -54,7 +54,15 @@ if (!$resultado) {
                                     <td><?php echo $producto['nombre']; ?></td>
                                     <td><?php echo $producto['precio']; ?></td>
                                     <td><?php echo $producto['stock']; ?></td>
-                                    <td><?php echo $producto['foto']; ?></td>
+                                    <td class="celda-foto">
+                                        <?php if (!empty($producto['foto'])): ?>
+                                            <img src="uploads/productos/<?php echo $producto['foto']; ?>" alt="Foto del producto" class="foto-producto">
+                                        <?php else: ?>
+                                            <div class="foto-placeholder">
+                                                <span class="material-icons">image</span>
+                                            </div>
+                                        <?php endif; ?>
+                                    </td>
                                     <td class="acciones">
                                         <a href="editar_producto.php?id=<?php echo $producto['id']; ?>" class="btn-editar">Editar</a>
                                         <a href="eliminar_producto.php?id=<?php echo $producto['id']; ?>" class="btn-eliminar" onclick="return confirm('¿Estás seguro de eliminar este producto?')">Eliminar</a>
@@ -74,7 +82,7 @@ if (!$resultado) {
             <span class="close" onclick="cerrarModal()">&times;</span>
             <h2>Agregar Nuevo Producto</h2>
             <div id="mensaje-error" class="mensaje error" style="display: none;"></div>
-            <form id="formInsertar" class="form-insertar">
+            <form id="formProducto" class="form-insertar" enctype="multipart/form-data">
                 <div class="form-group">
                     <label for="codigo">Código:</label>
                     <input type="text" id="codigo" name="codigo" required>
@@ -92,8 +100,9 @@ if (!$resultado) {
                     <input type="text" id="stock" name="stock" required>
                 </div>
                 <div class="form-group">
-                    <label for="foto">Foto:</label>
-                    <input type="text" id="foto" name="foto" required>
+                    <label for="foto">Foto del Producto:</label>
+                    <input type="file" id="foto" name="foto" accept="image/*" onchange="previewImage(this)">
+                    <div id="imagePreview" class="image-preview"></div>
                 </div>
                 <div class="form-buttons">
                     <button type="button" class="btn-cancelar" onclick="cerrarModal()">Cancelar</button>
@@ -106,8 +115,9 @@ if (!$resultado) {
     <script>
     function abrirModal() {
         document.getElementById('modalInsertar').style.display = 'block';
-        document.getElementById('formInsertar').reset();
+        document.getElementById('formProducto').reset();
         document.getElementById('mensaje-error').style.display = 'none';
+        document.getElementById('imagePreview').innerHTML = '';
     }
 
     function cerrarModal() {
@@ -120,9 +130,38 @@ if (!$resultado) {
         errorDiv.style.display = 'block';
     }
 
-    document.getElementById('formInsertar').addEventListener('submit', function(e) {
+    function validarFormulario() {
+        const codigo = document.getElementById('codigo').value.trim();
+        const nombre = document.getElementById('nombre').value.trim();
+        const precio = document.getElementById('precio').value.trim();
+        const stock = document.getElementById('stock').value.trim();
+        const foto = document.getElementById('foto').files[0];
+
+        if (!codigo || !nombre || !precio || !stock) {
+            mostrarError('Todos los campos son requeridos');
+            return false;
+        }
+
+        if (isNaN(precio) || parseFloat(precio) <= 0) {
+            mostrarError('El precio debe ser un número válido mayor a 0');
+            return false;
+        }
+
+        if (isNaN(stock) || parseInt(stock) < 0) {
+            mostrarError('El stock debe ser un número válido mayor o igual a 0');
+            return false;
+        }
+
+        return true;
+    }
+
+    document.getElementById('formProducto').addEventListener('submit', function(e) {
         e.preventDefault();
         
+        if (!validarFormulario()) {
+            return;
+        }
+
         const formData = new FormData(this);
         
         fetch('insertar_producto.php', {
@@ -139,6 +178,7 @@ if (!$resultado) {
             }
         })
         .catch(error => {
+            console.error('Error:', error);
             mostrarError('Error al procesar la solicitud');
         });
     });
@@ -148,6 +188,27 @@ if (!$resultado) {
         const modal = document.getElementById('modalInsertar');
         if (event.target == modal) {
             cerrarModal();
+        }
+    }
+
+    // Función para previsualizar la imagen
+    function previewImage(input) {
+        const preview = document.getElementById('imagePreview');
+        preview.innerHTML = '';
+        
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.style.maxWidth = '150px';
+                img.style.maxHeight = '150px';
+                img.style.objectFit = 'contain';
+                preview.appendChild(img);
+            }
+            
+            reader.readAsDataURL(input.files[0]);
         }
     }
     </script>

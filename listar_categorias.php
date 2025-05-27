@@ -17,7 +17,7 @@ if (!$resultado) {
     <title>Lista de Categorías</title>
     <link rel="stylesheet" href="css/estilos.css">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link rel="stylesheet" href="css/listarUsuario.css">
+    <link rel="stylesheet" href="css/listarCategorias.css">
 </head>
 <body>
     <div class="contenedor-principal">
@@ -26,33 +26,40 @@ if (!$resultado) {
         <div class="contenido">
             <div class="titulo-seccion">
                 <h1>Lista de Categorías</h1>
-                
             </div>
             <div class="btn-agregar-contenedor">
-                    <button onclick="abrirModal()" class="btn-agregar">+</button>
-                </div>
+                <button onclick="abrirModal()" class="btn-agregar">+</button>
+            </div>
 
             <?php if ($resultado->num_rows === 0): ?>
                 <p class="mensaje">No hay categorías registradas.</p>
             <?php else: ?>
                 <div class="tabla-contenedor">
-                    <table >
+                    <table>
                         <thead>
                             <tr>
-                                
                                 <th>Código</th>
                                 <th>Nombre</th>
                                 <th>Ubicación</th>
+                                <th>Foto</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php while ($categoria = $resultado->fetch_assoc()): ?>
                                 <tr>
-                                    
                                     <td><?php echo $categoria['codigo']; ?></td>
                                     <td><?php echo $categoria['nombre']; ?></td>
                                     <td><?php echo $categoria['ubicacion']; ?></td>
+                                    <td class="celda-foto">
+                                        <?php if (!empty($categoria['foto'])): ?>
+                                            <img src="uploads/categorias/<?php echo $categoria['foto']; ?>" alt="Foto de categoría" class="foto-categoria">
+                                        <?php else: ?>
+                                            <div class="foto-placeholder">
+                                                <span class="material-icons">image</span>
+                                            </div>
+                                        <?php endif; ?>
+                                    </td>
                                     <td class="acciones">
                                         <a href="editar_categorias.php?id=<?php echo $categoria['id']; ?>" class="btn-editar">
                                             <span class="material-icons">edit</span>
@@ -79,7 +86,7 @@ if (!$resultado) {
         <div class="modal-content">
             <span class="close" onclick="cerrarModal()">&times;</span>
             <h2>Agregar Nueva Categoría</h2>
-            <form id="formCategoria" class="modal-form">
+            <form id="formCategoria" class="modal-form" enctype="multipart/form-data">
                 <div class="modal-form-group">
                     <label for="codigo">Código:</label>
                     <input type="text" id="codigo" name="codigo" required>
@@ -91,6 +98,11 @@ if (!$resultado) {
                 <div class="modal-form-group">
                     <label for="ubicacion">Ubicación:</label>
                     <input type="text" id="ubicacion" name="ubicacion" required>
+                </div>
+                <div class="modal-form-group">
+                    <label for="foto">Foto:</label>
+                    <input type="file" id="foto" name="foto" accept="image/*" onchange="previewImage(this)">
+                    <div id="imagePreview" class="image-preview"></div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="modal-btn modal-btn-secondary" onclick="cerrarModal()">Cancelar</button>
@@ -109,6 +121,7 @@ if (!$resultado) {
         function cerrarModal() {
             document.getElementById('modalAgregar').style.display = 'none';
             document.getElementById('formCategoria').reset();
+            document.getElementById('imagePreview').innerHTML = '';
         }
 
         // Cerrar el modal si se hace clic fuera de él
@@ -116,6 +129,27 @@ if (!$resultado) {
             var modal = document.getElementById('modalAgregar');
             if (event.target == modal) {
                 cerrarModal();
+            }
+        }
+
+        // Función para previsualizar la imagen
+        function previewImage(input) {
+            const preview = document.getElementById('imagePreview');
+            preview.innerHTML = '';
+            
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.style.maxWidth = '150px';
+                    img.style.maxHeight = '150px';
+                    img.style.objectFit = 'contain';
+                    preview.appendChild(img);
+                }
+                
+                reader.readAsDataURL(input.files[0]);
             }
         }
 
