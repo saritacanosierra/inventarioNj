@@ -15,129 +15,142 @@ if (!$resultado) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lista de productos</title>
-    <style>
-    .cabecera-negra {
-            background-color: black;
-            width: 100%; 
-            height: 100px; 
-            padding: 5px 10px;
+    <link rel="stylesheet" href="css/estilos.css">
+    <link rel="stylesheet" href="css/listarUsuario.css">
 
-            display: flex;
-            align-items: center;    
-            justify-content: space-between;
-
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2); /* Sombra opcional */
-        }
-
-        .logo-circulo-blanco {
-            width: 70px;
-            height: 70px; 
-            background-color: white; 
-            border-radius: 50%; 
-            overflow: hidden;
-            position: relative; 
-            display: flex;
-            justify-content: center; 
-            align-items: center;  
-        }
-
-        .logo-dentro-circulo {
-            max-width: 130%; /* El logo ocupará el 80% del ancho del círculo (ajusta a tu gusto) */
-            max-height: 130%; /* El logo ocupará el 80% de la altura del círculo */
-            display: block;  /* Ayuda a eliminar espacios extra */
-            object-fit: contain; 
-        }
-        .menu-cabecera ul {
-            list-style: none; /* Elimina los puntos de la lista */
-            margin: 0; /* Elimina el margen por defecto de la ul */
-            padding: 0; /* Elimina el padding por defecto de la ul */
-            display: flex; /* Convierte la lista en un contenedor flex para los items */
-        }
-
-        .menu-cabecera li {
-            margin-left: 50px; /* Espacio entre cada elemento del menú */
-            /* Puedes ajustar este valor para más o menos separación */
-        }      
-
-        .menu-cabecera a {
-            text-decoration: none; /* Elimina el subrayado de los enlaces */
-            color: white; /* Color del texto de los enlaces (blanco sobre la franja negra) */
-            font-weight: bold; /* Negrita para los enlaces */
-            font-size: 16px; /* Tamaño de la letra */
-            padding: 5px 0; /* Un pequeño padding para hacer el área clickeable más grande */
-            transition: color 0.3s ease; /* Transición suave para el hover */
-        }
-
-        .menu-cabecera a:hover {
-            color: #E1B8E2;
-        }
-        table {
-            width: 80%;
-            margin: 20px auto;
-            border-collapse: collapse;
-        }
-        th, td {
-            border: 1px solid #ccc;
-            padding: 8px;
-            text-align: left;
-        }
-        th {
-            background-color: #E1B8E2;
-        }
-        .acciones a {
-            margin-right: 10px;
-            text-decoration: none;
-        }
-    </style>
 </head>
 <body>
-<header class="cabecera-negra">
-        <div class="logo-circulo-blanco">
-            <img src="img/logo (40).png" alt="Logo de tu Empresa" class="logo-dentro-circulo">
-        </div>
-        <nav class="menu-cabecera">
-            <ul>
-                <li><a href="insertar_producto.php">Agregar Nuevo producto</a></li>
-                <li><a href="index.php">Volver al Menú</a></li>
-                </ul>
-        </nav>
-        </header>
     <div class="contenedor-principal">
+        <?php include './components/header.php'; ?>
+        
+        <h1 id="bienvenida">Lista de productos</h1>
+        
+        <div class="contenido">
+            <div class="btn-agregar-contenedor">
+                <button onclick="abrirModal()" class="btn-agregar">+</button>
+            </div>
+
+            <div class="tabla-contenedor">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Código</th>
+                            <th>Nombre</th>
+                            <th>Precio</th>
+                            <th>Stock</th>
+                            <th>Foto</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if ($resultado->num_rows === 0): ?>
+                            <tr><td colspan="7" style="text-align: center;">No hay productos registrados</td></tr>
+                        <?php else: ?>
+                            <?php while ($producto = $resultado->fetch_assoc()): ?>
+                                <tr>
+                                    <td><?php echo $producto['id']; ?></td>
+                                    <td><?php echo $producto['codigo']; ?></td>
+                                    <td><?php echo $producto['nombre']; ?></td>
+                                    <td><?php echo $producto['precio']; ?></td>
+                                    <td><?php echo $producto['stock']; ?></td>
+                                    <td><?php echo $producto['foto']; ?></td>
+                                    <td class="acciones">
+                                        <a href="editar_producto.php?id=<?php echo $producto['id']; ?>" class="btn-editar">Editar</a>
+                                        <a href="eliminar_producto.php?id=<?php echo $producto['id']; ?>" class="btn-eliminar" onclick="return confirm('¿Estás seguro de eliminar este producto?')">Eliminar</a>
+                                    </td>
+                                </tr>
+                            <?php endwhile; ?>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
-    <h1>Lista de productos</h1>
-    <?php if ($resultado->num_rows === 0): ?>
-        <p>No hay usuarios registrados.</p>
-    <?php else: ?>
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Código</th>
-                    <th>Nombre</th>
-                    <th>Precio</th>
-                    <th>Stock</th>
-                    <th>Foto</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php while ($producto = $resultado->fetch_assoc()): ?>
-                    <tr>
-                        <td><?php echo $producto['id']; ?></td>
-                        <td><?php echo $producto['codigo']; ?></td>
-                        <td><?php echo $producto['nombre']; ?></td>
-                        <td><?php echo $producto['precio']; ?></td>
-                        <td><?php echo $producto['stock']; ?></td>
-                        <td><?php echo $producto['foto']; ?></td>
-                        <td class="acciones">
-                            <a href="editar_producto.php?id=<?php echo $producto['id']; ?>">Editar</a>
-                            <a href="eliminar_producto.php?id=<?php echo $producto['id']; ?>" onclick="return confirm('¿Estás seguro de eliminar este usuario?')">Eliminar</a>
-                        </td>
-                    </tr>
-                <?php endwhile; ?>
-            </tbody>
-        </table>
-    <?php endif; ?>
+    </div>
+
+    <!-- Modal para insertar producto -->
+    <div id="modalInsertar" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="cerrarModal()">&times;</span>
+            <h2>Agregar Nuevo Producto</h2>
+            <div id="mensaje-error" class="mensaje error" style="display: none;"></div>
+            <form id="formInsertar" class="form-insertar">
+                <div class="form-group">
+                    <label for="codigo">Código:</label>
+                    <input type="text" id="codigo" name="codigo" required>
+                </div>
+                <div class="form-group">
+                    <label for="nombre">Nombre:</label>
+                    <input type="text" id="nombre" name="nombre" required>
+                </div>
+                <div class="form-group">
+                    <label for="precio">Precio:</label>
+                    <input type="text" id="precio" name="precio" required>
+                </div>
+                <div class="form-group">
+                    <label for="stock">Stock:</label>
+                    <input type="text" id="stock" name="stock" required>
+                </div>
+                <div class="form-group">
+                    <label for="foto">Foto:</label>
+                    <input type="text" id="foto" name="foto" required>
+                </div>
+                <div class="form-buttons">
+                    <button type="button" class="btn-cancelar" onclick="cerrarModal()">Cancelar</button>
+                    <button type="submit" class="btn-guardar">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+    function abrirModal() {
+        document.getElementById('modalInsertar').style.display = 'block';
+        document.getElementById('formInsertar').reset();
+        document.getElementById('mensaje-error').style.display = 'none';
+    }
+
+    function cerrarModal() {
+        document.getElementById('modalInsertar').style.display = 'none';
+    }
+
+    function mostrarError(mensaje) {
+        const errorDiv = document.getElementById('mensaje-error');
+        errorDiv.textContent = mensaje;
+        errorDiv.style.display = 'block';
+    }
+
+    document.getElementById('formInsertar').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        
+        fetch('insertar_producto.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                mostrarError(data.error);
+            } else {
+                cerrarModal();
+                location.reload();
+            }
+        })
+        .catch(error => {
+            mostrarError('Error al procesar la solicitud');
+        });
+    });
+
+    // Cerrar el modal si se hace clic fuera de él
+    window.onclick = function(event) {
+        const modal = document.getElementById('modalInsertar');
+        if (event.target == modal) {
+            cerrarModal();
+        }
+    }
+    </script>
 </body>
 </html>
 <?php $conexion->close(); ?>

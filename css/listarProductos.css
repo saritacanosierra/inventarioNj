@@ -1,0 +1,148 @@
+
+.btn-agregar:hover {
+    background-color: #d4a7d5;
+}
+
+.btn-agregar {
+    background-color: #E1B8E2;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 100px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+}
+
+.btn-agregar-contenedor {
+    display: flex;
+    width: 100%;
+    justify-content: right;
+    margin-bottom: 20px;
+}
+
+.btn-agregar:hover {
+    background-color: #ececec;
+}
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Estilos para el modal */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    overflow-y: auto;
+}
+
+.modal-content {
+    background-color: #fff;
+    margin: 5% auto;
+    padding: 30px;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 600px;
+    position: relative;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.close {
+    position: absolute;
+    right: 20px;
+    top: 15px;
+    font-size: 28px;
+    font-weight: bold;
+    color: #666;
+    cursor: pointer;
+}
+
+.close:hover {
+    color: #000;
+}
+
+/* Estilos para el formulario */
+.form-insertar {
+    margin-top: 20px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: #333;
+    font-weight: bold;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+.form-group input:focus {
+    border-color: #E1B8E2;
+    outline: none;
+    box-shadow: 0 0 5px rgba(225, 184, 226, 0.3);
+}
+
+.form-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 30px;
+}
+
+.btn-guardar, .btn-cancelar {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s;
+}
+
+.btn-guardar {
+    background-color: #E1B8E2;
+    color: white;
+}
+
+.btn-cancelar {
+    background-color: #6c757d;
+    color: white;
+}
+
+.btn-guardar:hover {
+    background-color: #d4a7d5;
+}
+
+.btn-cancelar:hover {
+    background-color: #5a6268;
+} 
