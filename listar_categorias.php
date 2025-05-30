@@ -41,7 +41,7 @@ if (!$resultado) {
                                 <th>Código</th>
                                 <th>Nombre</th>
                                 <th>Ubicación</th>
-                                <th>Foto</th>
+                               
                                 <th>Acciones</th>
                             </tr>
                         </thead>
@@ -51,15 +51,6 @@ if (!$resultado) {
                                     <td><?php echo $categoria['codigo']; ?></td>
                                     <td><?php echo $categoria['nombre']; ?></td>
                                     <td><?php echo $categoria['ubicacion']; ?></td>
-                                    <td class="celda-foto">
-                                        <?php if (!empty($categoria['foto'])): ?>
-                                            <img src="uploads/categorias/<?php echo $categoria['foto']; ?>" alt="Foto de categoría" class="foto-categoria">
-                                        <?php else: ?>
-                                            <div class="foto-placeholder">
-                                                <span class="material-icons">image</span>
-                                            </div>
-                                        <?php endif; ?>
-                                    </td>
                                     <td class="acciones">
                                         <a href="editar_categorias.php?id=<?php echo $categoria['id']; ?>" class="btn-editar">
                                             <span class="material-icons">edit</span>
@@ -99,11 +90,6 @@ if (!$resultado) {
                     <label for="ubicacion">Ubicación:</label>
                     <input type="text" id="ubicacion" name="ubicacion" required>
                 </div>
-                <div class="modal-form-group">
-                    <label for="foto">Foto:</label>
-                    <input type="file" id="foto" name="foto" accept="image/*" onchange="previewImage(this)">
-                    <div id="imagePreview" class="image-preview"></div>
-                </div>
                 <div class="modal-footer">
                     <button type="button" class="modal-btn modal-btn-secondary" onclick="cerrarModal()">Cancelar</button>
                     <button type="submit" class="modal-btn modal-btn-primary">Guardar</button>
@@ -121,7 +107,6 @@ if (!$resultado) {
         function cerrarModal() {
             document.getElementById('modalAgregar').style.display = 'none';
             document.getElementById('formCategoria').reset();
-            document.getElementById('imagePreview').innerHTML = '';
         }
 
         // Cerrar el modal si se hace clic fuera de él
@@ -129,27 +114,6 @@ if (!$resultado) {
             var modal = document.getElementById('modalAgregar');
             if (event.target == modal) {
                 cerrarModal();
-            }
-        }
-
-        // Función para previsualizar la imagen
-        function previewImage(input) {
-            const preview = document.getElementById('imagePreview');
-            preview.innerHTML = '';
-            
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                
-                reader.onload = function(e) {
-                    const img = document.createElement('img');
-                    img.src = e.target.result;
-                    img.style.maxWidth = '150px';
-                    img.style.maxHeight = '150px';
-                    img.style.objectFit = 'contain';
-                    preview.appendChild(img);
-                }
-                
-                reader.readAsDataURL(input.files[0]);
             }
         }
 

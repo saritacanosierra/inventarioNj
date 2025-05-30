@@ -1,6 +1,15 @@
 <?php
 require 'conexion.php';
 
+// Definir las páginas disponibles
+$paginas = [
+    'usuarios' => 'pages/listar_usuarios.php',
+    'productos' => 'listar_producto.php',
+    'categorias' => 'listar_categorias.php'
+];
+
+// Obtener la página solicitada
+$pagina = isset($_GET['pagina']) ? $_GET['pagina'] : 'inicio';
 ?>
 
 <!DOCTYPE html>
@@ -10,40 +19,64 @@ require 'conexion.php';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Menú Principal</title>
     <link rel="stylesheet" href="css/estilos.css">
+    <link rel="stylesheet" href="css/index.css">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 <body>
     <div class="contenedor-principal">
-
-            <?php include 'components/header.php'; ?>
-          
-
+        <?php include 'components/header.php'; ?>
         <div class="contenido">
-            <?php
-                if (isset($_GET['pagina'])) {
-                    $pagina = $_GET['pagina'];
-                    switch ($pagina) {
-                        case 'usuarios':
-                            echo '<h2>Gestión de Usuarios</h2>';
-                            // Aquí incluirías el contenido para la gestión de usuarios
-                            break;
-                        case 'productos':
-                            echo '<h2>Gestión de Productos</h2>';
-                            // Aquí incluirías el contenido para la gestión de productos
-                            break;
-                        case 'categorias':
-                            echo '<h2>Gestión de Categorías</h2>';
-                            // Aquí incluirías el contenido para la gestión de categorías
-                            break;
-                        default:
-                            echo '<h2 id="bienvenida">Bienvenido al Panel Principal</h2>';
-                            // Aquí podrías mostrar un panel principal o información general
-                            break;
+            <?php ?>
+            <h2>Catálogo</h2>
+            
+            <div class="slider-container">
+                <div class="slider">
+                    <?php
+                    $directorio = 'uploads/productos/';
+                    $imagenes = glob($directorio . '*.{jpg,jpeg,png,gif}', GLOB_BRACE);
+                    
+                    foreach($imagenes as $imagen) {
+                        echo '<div class="slide">';
+                        echo '<img src="' . $imagen . '" alt="Producto">';
+                        echo '</div>';
                     }
-                } else {
-                    echo '<h2 id="bienvenida">Bienvenido al Panel Principal</h2>';
-                }
-            ?>
+                    ?>
+                </div>
+                <button class="slider-btn prev">❮</button>
+                <button class="slider-btn next">❯</button>
+            </div>
+
+           
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const slider = document.querySelector('.slider');
+                    const slides = document.querySelectorAll('.slide');
+                    const prevBtn = document.querySelector('.prev');
+                    const nextBtn = document.querySelector('.next');
+                    let currentSlide = 0;
+
+                    function updateSlider() {
+                        slider.style.transform = `translateX(-${currentSlide * 100}%)`;
+                    }
+
+                    function nextSlide() {
+                        currentSlide = (currentSlide + 1) % slides.length;
+                        updateSlider();
+                    }
+
+                    function prevSlide() {
+                        currentSlide = (currentSlide - 1 + slides.length) % slides.length;
+                        updateSlider();
+                    }
+
+                    // Auto slide cada 5 segundos
+                    setInterval(nextSlide, 5000);
+
+                    // Eventos de botones
+                    nextBtn.addEventListener('click', nextSlide);
+                    prevBtn.addEventListener('click', prevSlide);
+                });
+            </script>
         </div>
     </div>
 </body>
