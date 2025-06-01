@@ -16,37 +16,83 @@ if (!$resultado) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lista de productos</title>
     <link rel="stylesheet" href="css/estilos.css">
-    <link rel="stylesheet" href="css/listarUsuario.css">
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/tablas.css">
+
+    <style>
+        .filtro-agregar-contenedor {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            width: 100%;
+            padding: 0 15px;
+            gap: 2px;
+        }
+
+        .filtro-contenedor {
+            flex: 1;
+            margin-right: 10px;
+            max-width: calc(100% - 40px);
+        }
+
+        .filtro-input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 100%;
+            font-size: 14px;
+            transition: border-color 0.3s;
+            min-width: 300px;
+        }
+
+        .filtro-input:focus {
+            outline: none;
+            border-color: #E1B8E2;
+            box-shadow: 0 0 0 2px rgba(225, 184, 226, 0.25);
+        }
+
+        .filtro-input::placeholder {
+            color: #999;
+        }
+    </style>
 
 </head>
 <body>
     <div class="contenedor-principal">
         <?php include './components/header.php'; ?>
         
-        <h1 id="bienvenida">Lista de productos</h1>
+      
         
         <div class="contenido">
-            <div class="btn-agregar-contenedor">
-                <button onclick="abrirModal()" class="btn-agregar">+</button>
-            </div>
+            <h2>Lista de Productos</h2>
+            
+            <?php if ($resultado->num_rows === 0): ?>
+                <p>No hay productos registrados.</p>
+            <?php else: ?>
+                <div class="filtro-agregar-contenedor">
+                    <div class="filtro-contenedor">
+                        <input type="text" id="filtro-producto" placeholder="Buscar producto..." class="filtro-input">
+                    </div>
+                    <div class="btn-agregar-contenedor">
+                        <button onclick="abrirModal()" class="btn-agregar">+</button>
+                    </div>
+                </div>
 
-            <div class="tabla-contenedor">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Código</th>
-                            <th>Nombre</th>
-                            <th>Precio</th>
-                            <th>Stock</th>
-                            <th>Foto</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if ($resultado->num_rows === 0): ?>
-                            <tr><td colspan="7" style="text-align: center;">No hay productos registrados</td></tr>
-                        <?php else: ?>
+                <div class="tabla-contenedor">
+                    <table id="tabla-productos">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Código</th>
+                                <th>Nombre</th>
+                                <th>Precio</th>
+                                <th>Stock</th>
+                                <th>Foto</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
                             <?php while ($producto = $resultado->fetch_assoc()): ?>
                                 <tr>
                                     <td><?php echo $producto['id']; ?></td>
@@ -69,10 +115,10 @@ if (!$resultado) {
                                     </td>
                                 </tr>
                             <?php endwhile; ?>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
-            </div>
+                        </tbody>
+                    </table>
+                </div>
+            <?php endif; ?>
         </div>
     </div>
 
@@ -211,6 +257,30 @@ if (!$resultado) {
             reader.readAsDataURL(input.files[0]);
         }
     }
+
+    // Función para filtrar productos
+    document.getElementById('filtro-producto').addEventListener('keyup', function() {
+        const filtro = this.value.toLowerCase();
+        const tabla = document.getElementById('tabla-productos');
+        const filas = tabla.getElementsByTagName('tr');
+
+        for (let i = 0; i < filas.length; i++) {
+            const fila = filas[i];
+            const celdas = fila.getElementsByTagName('td');
+            let mostrar = false;
+
+            // Buscar en todas las celdas excepto la última (acciones)
+            for (let j = 0; j < celdas.length - 1; j++) {
+                const texto = celdas[j].textContent || celdas[j].innerText;
+                if (texto.toLowerCase().indexOf(filtro) > -1) {
+                    mostrar = true;
+                    break;
+                }
+            }
+
+            fila.style.display = mostrar ? '' : 'none';
+        }
+    });
     </script>
 </body>
 </html>

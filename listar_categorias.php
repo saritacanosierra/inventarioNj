@@ -17,7 +17,8 @@ if (!$resultado) {
     <title>Lista de Categorías</title>
     <link rel="stylesheet" href="css/estilos.css">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link rel="stylesheet" href="css/listarCategorias.css">
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/tablas.css">
 </head>
 <body>
     <div class="contenedor-principal">
@@ -27,15 +28,20 @@ if (!$resultado) {
             <div class="titulo-seccion">
                 <h1>Lista de Categorías</h1>
             </div>
-            <div class="btn-agregar-contenedor">
-                <button onclick="abrirModal()" class="btn-agregar">+</button>
+            <div class="filtro-agregar-contenedor">
+                <div class="filtro-contenedor">
+                    <input type="text" id="filtro-categoria" placeholder="Buscar categoría..." class="filtro-input">
+                </div>
+                <div class="btn-agregar-contenedor">
+                    <button onclick="abrirModal()" class="btn-agregar">+</button>
+                </div>
             </div>
 
             <?php if ($resultado->num_rows === 0): ?>
                 <p class="mensaje">No hay categorías registradas.</p>
             <?php else: ?>
                 <div class="tabla-contenedor">
-                    <table>
+                    <table id="tabla-categorias">
                         <thead>
                             <tr>
                                 <th>Código</th>
@@ -98,6 +104,44 @@ if (!$resultado) {
         </div>
     </div>
 
+    <style>
+        .filtro-agregar-contenedor {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            width: 100%;
+            padding: 0 15px;
+            gap: 2px;
+        }
+
+        .filtro-contenedor {
+            flex: 1;
+            margin-right: 10px;
+            max-width: calc(100% - 40px);
+        }
+
+        .filtro-input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 100%;
+            font-size: 14px;
+            transition: border-color 0.3s;
+            min-width: 300px;
+        }
+
+        .filtro-input:focus {
+            outline: none;
+            border-color: #E1B8E2;
+            box-shadow: 0 0 0 2px rgba(225, 184, 226, 0.25);
+        }
+
+        .filtro-input::placeholder {
+            color: #999;
+        }
+    </style>
+
     <script>
         // Funciones para el modal
         function abrirModal() {
@@ -142,6 +186,30 @@ if (!$resultado) {
                 console.error('Error:', error);
                 alert('Error al procesar la solicitud');
             });
+        });
+
+        // Función para filtrar categorías
+        document.getElementById('filtro-categoria').addEventListener('keyup', function() {
+            const filtro = this.value.toLowerCase();
+            const tabla = document.getElementById('tabla-categorias');
+            const filas = tabla.getElementsByTagName('tr');
+
+            for (let i = 0; i < filas.length; i++) {
+                const fila = filas[i];
+                const celdas = fila.getElementsByTagName('td');
+                let mostrar = false;
+
+                // Buscar en todas las celdas excepto la última (acciones)
+                for (let j = 0; j < celdas.length - 1; j++) {
+                    const texto = celdas[j].textContent || celdas[j].innerText;
+                    if (texto.toLowerCase().indexOf(filtro) > -1) {
+                        mostrar = true;
+                        break;
+                    }
+                }
+
+                fila.style.display = mostrar ? '' : 'none';
+            }
         });
     </script>
 </body>

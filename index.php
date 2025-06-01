@@ -46,7 +46,50 @@ $pagina = isset($_GET['pagina']) ? $_GET['pagina'] : 'inicio';
                 <button class="slider-btn next">❯</button>
             </div>
 
-           
+            <div class="social-media-container">
+                <div class="social-media-item">
+                    <iframe src="https://www.facebook.com/plugins/page.php?href=https%3A%2F%2Fwww.facebook.com%2FropaNuncaJamas&tabs=timeline&width=300&height=400&small_header=false&adapt_container_width=true&hide_cover=false&show_facepile=true&appId" 
+                            width="300" 
+                            height="400" 
+                            style="border:none;overflow:hidden;border-radius: 15px;box-shadow: 0 4px 8px rgba(0,0,0,0.1);" 
+                            scrolling="no" 
+                            frameborder="0" 
+                            allowfullscreen="true" 
+                            allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share">
+                    </iframe>
+                </div>
+                <div class="social-media-item">
+                    <iframe src="https://www.instagram.com/ropa_nunca_jamas/embed" 
+                            width="300" 
+                            height="400" 
+                            style="border:none;overflow:hidden;border-radius: 15px;box-shadow: 0 4px 8px rgba(0,0,0,0.1);" 
+                            frameborder="0" 
+                            scrolling="no" 
+                            allowtransparency="true">
+                    </iframe>
+                </div>
+            </div>
+
+            <style>
+                .social-media-container {
+                    display: flex;
+                    justify-content: center;
+                    gap: 20px;
+                    margin-top: 30px;
+                    flex-wrap: wrap;
+                }
+                .social-media-item {
+                    flex: 1;
+                    min-width: 300px;
+                    max-width: 300px;
+                    height: 400px;
+                }
+                .social-media-item iframe {
+                    width: 100%;
+                    height: 100%;
+                }
+            </style>
+
             <script>
                 document.addEventListener('DOMContentLoaded', function() {
                     const slider = document.querySelector('.slider');

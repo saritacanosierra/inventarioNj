@@ -17,6 +17,7 @@ if (!$resultado) {
     <title>Lista de Usuarios</title>
     <link rel="stylesheet" href="css/estilos.css">
     <link rel="stylesheet" href="css/listarUsuario.css">
+    <link rel="stylesheet" href="css/tablas.css">
 </head>
 <body>
     <div class="contenedor-principal">
@@ -28,8 +29,13 @@ if (!$resultado) {
             <?php if ($resultado->num_rows === 0): ?>
                 <p>No hay usuarios registrados.</p>
             <?php else: ?>
-                <div class="btn-agregar-contenedor">
-                    <button onclick="abrirModal()" class="btn-agregar">+</button>
+                <div class="filtro-agregar-contenedor">
+                    <div class="filtro-contenedor">
+                        <input type="text" id="filtro-usuario" placeholder="Buscar usuario..." class="filtro-input">
+                    </div>
+                    <div class="btn-agregar-contenedor">
+                        <button onclick="abrirModal()" class="btn-agregar">+</button>
+                    </div>
                 </div>
                 <div class="tabla-contenedor">
                     <table>
@@ -106,6 +112,68 @@ if (!$resultado) {
             </form>
         </div>
     </div>
+
+    <style>
+        .filtro-agregar-contenedor {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            width: 100%;
+            padding: 0 15px;
+            gap: 2px; /* Reducir el espacio entre elementos */
+        }
+
+        .filtro-contenedor {
+            flex: 1;
+            margin-right: 10px; /* Reducir el margen derecho */
+            max-width: calc(100% - 40px); /* Reducir el espacio para el botón */
+        }
+
+        .filtro-input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 100%;
+            font-size: 14px;
+            transition: border-color 0.3s;
+            min-width: 300px;
+        }
+
+        .filtro-input:focus {
+            outline: none;
+            border-color: #E1B8E2;
+            box-shadow: 0 0 0 2px rgba(225, 184, 226, 0.25);
+        }
+
+        .filtro-input::placeholder {
+            color: #999;
+        }
+
+    
+
+        .tabla-contenedor {
+            width: 100%;
+            overflow-x: auto;
+            padding: 0 15px; /* Añadir padding para alinear con el filtro */
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+    </style>
 
     <script>
         function abrirModal() {
@@ -184,6 +252,30 @@ if (!$resultado) {
                 console.error('Error:', error);
                 mostrarError('Error al procesar la solicitud. Por favor, intente nuevamente.');
             });
+        });
+
+        // Función para filtrar usuarios
+        document.getElementById('filtro-usuario').addEventListener('keyup', function() {
+            const filtro = this.value.toLowerCase();
+            const tabla = document.getElementById('tabla-usuarios');
+            const filas = tabla.getElementsByTagName('tr');
+
+            for (let i = 0; i < filas.length; i++) {
+                const fila = filas[i];
+                const celdas = fila.getElementsByTagName('td');
+                let mostrar = false;
+
+                // Buscar en todas las celdas excepto la última (acciones)
+                for (let j = 0; j < celdas.length - 1; j++) {
+                    const texto = celdas[j].textContent || celdas[j].innerText;
+                    if (texto.toLowerCase().indexOf(filtro) > -1) {
+                        mostrar = true;
+                        break;
+                    }
+                }
+
+                fila.style.display = mostrar ? '' : 'none';
+            }
         });
     </script>
 </body>

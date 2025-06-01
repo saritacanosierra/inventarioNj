@@ -25,7 +25,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nombre = $_POST['nombre'];
     $precio = $_POST['precio'];
     $stock = $_POST['stock'];
-    $foto = $_POST['foto'];
+    $foto_actual = $_POST['foto_actual'];
+    
+    // Manejar la subida de la nueva imagen
+    $foto = $foto_actual; // Por defecto, mantener la foto actual
+    
+    if (isset($_FILES['foto']) && $_FILES['foto']['error'] === UPLOAD_ERR_OK) {
+        $directorio = "uploads/productos/";
+        
+        // Crear el directorio si no existe
+        if (!file_exists($directorio)) {
+            mkdir($directorio, 0777, true);
+        }
+        
+        // Generar nombre único para la nueva imagen
+        $extension = pathinfo($_FILES['foto']['name'], PATHINFO_EXTENSION);
+        $nuevo_nombre = uniqid() . '.' . $extension;
+        $ruta_completa = $directorio . $nuevo_nombre;
+        
+        // Mover la nueva imagen
+        if (move_uploaded_file($_FILES['foto']['tmp_name'], $ruta_completa)) {
+            // Eliminar la imagen anterior si existe
+            if (!empty($foto_actual) && file_exists($directorio . $foto_actual)) {
+                unlink($directorio . $foto_actual);
+            }
+            $foto = $nuevo_nombre;
+        } else {
+            $mensaje = 'Error al subir la nueva imagen.';
+        }
+    }
 
     $stmt = $conexion->prepare("UPDATE productos SET codigo = ?, nombre = ?, precio = ?, stock = ?, foto = ? WHERE id = ?");
     $stmt->bind_param("sssssi", $codigo, $nombre, $precio, $stock, $foto, $id);
@@ -75,30 +103,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         .logo-dentro-circulo {
-            max-width: 130%; /* El logo ocupará el 80% del ancho del círculo (ajusta a tu gusto) */
-            max-height: 130%; /* El logo ocupará el 80% de la altura del círculo */
-            display: block;  /* Ayuda a eliminar espacios extra */
+            max-width: 130%;
+            max-height: 130%; 
+            display: block; 
             object-fit: contain; 
         }
-        .menu-cabecera ul {
-            list-style: none; /* Elimina los puntos de la lista */
-            margin: 0; /* Elimina el margen por defecto de la ul */
-            padding: 0; /* Elimina el padding por defecto de la ul */
-            display: flex; /* Convierte la lista en un contenedor flex para los items */
+        .menu-cabecera {
+            padding: 0; 
+            display: flex; 
         }
 
         .menu-cabecera li {
-            margin-left: 50px; /* Espacio entre cada elemento del menú */
-            /* Puedes ajustar este valor para más o menos separación */
+            margin-left: 50px;
         }      
 
         .menu-cabecera a {
-            text-decoration: none; /* Elimina el subrayado de los enlaces */
-            color: white; /* Color del texto de los enlaces (blanco sobre la franja negra) */
-            font-weight: bold; /* Negrita para los enlaces */
-            font-size: 16px; /* Tamaño de la letra */
-            padding: 5px 0; /* Un pequeño padding para hacer el área clickeable más grande */
-            transition: color 0.3s ease; /* Transición suave para el hover */
+            color: white;  
+            font-weight: bold;
+            font-size: 16px;
+            padding: 5px 0; 
+            transition: color 0.3s ease; 
         }
 
         .menu-cabecera a:hover {
@@ -151,6 +175,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             color: #721c24;
             border: 1px solid #f5c6cb;
         }
+        .foto-actual {
+            margin-bottom: 15px;
+        }
+        
+        .foto-actual img {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 5px;
+        }
+        
+        .foto-actual p {
+            margin: 5px 0;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .image-preview {
+            margin-top: 10px;
+        }
+
+        .image-preview img {
+            max-width: 150px;
+            max-height: 150px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 5px;
+        }
     </style>
 </head>
 <body>
@@ -176,7 +227,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     <?php endif; ?>
 
-    <form method="POST">
+    <form method="POST" enctype="multipart/form-data">
         <h1 id=subtitulo>Editar Producto</h1>
         <input type="hidden" name="id" value="<?php echo $producto['id']; ?>">
 
@@ -192,8 +243,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <label for="stock">Stock:</label>
         <input type="text" name="stock" id="stock" value="<?php echo $producto['stock']; ?>" required>
 
-        <label for="foto">Foto:</label>
-        <input type="text" name="foto" id="foto" value="<?php echo $producto['foto']; ?>" required>
+        <div class="form-group">
+            <label for="foto">Foto:</label>
+            <?php if (!empty($producto['foto'])): ?>
+                <div class="foto-actual">
+                    <img src="uploads/productos/<?php echo $producto['foto']; ?>" alt="Foto actual" style="max-width: 150px; margin-bottom: 10px;">
+                    <p>Foto actual: <?php echo $producto['foto']; ?></p>
+                </div>
+            <?php endif; ?>
+            <input type="file" name="foto" id="foto" accept="image/*" onchange="previewImage(this)">
+            <div id="imagePreview" class="image-preview"></div>
+            <input type="hidden" name="foto_actual" value="<?php echo $producto['foto']; ?>">
+        </div>
+
+        <script>
+            function previewImage(input) {
+                const preview = document.getElementById('imagePreview');
+                preview.innerHTML = '';
+                
+                if (input.files && input.files[0]) {
+                    const reader = new FileReader();
+                    
+                    reader.onload = function(e) {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        preview.appendChild(img);
+                    }
+                    
+                    reader.readAsDataURL(input.files[0]);
+                }
+            }
+        </script>
 
         <button type="submit"><strong>Guardar Cambios</strong></button>
     </form>

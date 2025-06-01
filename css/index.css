@@ -61,6 +61,31 @@ h2 {
     font-weight: bold;
 }
 
+/* Estilos para los iframes de redes sociales */
+.social-media-container {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 30px;
+    flex-wrap: wrap;
+}
+
+.social-media-item {
+    flex: 1;
+    min-width: 300px;
+    max-width: 300px;
+    height: 400px;
+}
+
+.social-media-item iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    overflow: hidden;
+    border-radius: 15px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
 /* Estilos responsivos */
 @media (max-width: 768px) {
     .slider-container {
@@ -74,5 +99,11 @@ h2 {
     .slider-btn {
         padding: 12px;
         font-size: 16px;
+    }
+
+    .social-media-item {
+        min-width: 280px;
+        max-width: 280px;
+        height: 380px;
     }
 }
