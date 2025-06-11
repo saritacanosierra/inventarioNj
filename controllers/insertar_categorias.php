@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body>
     <header class="cabecera-negra">
         <div class="logo-circulo-blanco">
-            <img src="img/logo (40).png" alt="Logo de tu Empresa" class="logo-dentro-circulo">
+            <img src="../img/logo (40).png" alt="Logo de tu Empresa" class="logo-dentro-circulo">
         </div>
         <nav class="menu-cabecera">
             <ul>

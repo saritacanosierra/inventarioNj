@@ -1,5 +1,5 @@
 <?php
-require 'conexion.php';
+require '../conexion.php';
 
 if (isset($_GET['id'])) {
     $id = $_GET['id'];
@@ -7,7 +7,7 @@ if (isset($_GET['id'])) {
     $stmt->bind_param("i", $id);
 
     if ($stmt->execute()) {
-        header("Location: listar_categorias.php?mensaje=eliminado");
+        header("Location: ../pages/listar_categorias.php?mensaje=eliminado");
         exit();
     } else {
         die('Error al eliminar la categoria: ' . $conexion->error);

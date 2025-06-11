@@ -1,21 +1,23 @@
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 <header class="cabecera-negra">
     <div class="logo-circulo-blanco">
-        <a href="index.php"><img src="img/logo (40).png" alt="Logo de tu Empresa" class="logo-dentro-circulo"></a>
+        <a href="/inventarioNj/index.php"><img src="/inventarioNj/img/logo (40).png" alt="Logo de tu Empresa" class="logo-dentro-circulo"></a>
     </div>
     <nav class="menu-cabecera">
         <ul>
-            <li><a href="index.php">Inicio</a></li>
-            <li><a href="listar_usuarios.php">Usuarios</a></li>
-            <li><a href="listar_producto.php">Productos</a></li>
-            <li><a href="listar_categorias.php">Categorías</a></li>
+            <li><a href="/inventarioNj/index.php">Inicio</a></li>
+            <li><a href="/inventarioNj/pages/listar_usuarios.php">Usuarios</a></li>
+            <li><a href="/inventarioNj/pages/listar_producto.php">Productos</a></li>
+            <li><a href="/inventarioNj/pages/listar_categorias.php">Categorías</a></li>
+            <li><a href="/inventarioNj/pages/financiero.php">Financiero</a></li>
+            <li><a href="/inventarioNj/pages/ventas.php">Ventas</a></li>
             <li>
                 <div class="user-menu">
                     <button class="user-btn" onclick="toggleDropdown()">
                         <span class="material-icons">account_circle</span>
                     </button>
                     <div id="userDropdown" class="dropdown-content">
-                        <a href="cerrar_sesion.php" class="cerrar-sesion">Cerrar Sesión</a>
+                        <a href="/inventarioNj/cerrar_sesion.php" class="cerrar-sesion">Cerrar Sesión</a>
                     </div>
                 </div>
             </li>

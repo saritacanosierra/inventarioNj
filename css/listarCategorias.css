@@ -1,0 +1,59 @@
+.filtro-agregar-contenedor {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    width: 100%;
+    padding: 0 15px;
+    gap: 2px;
+}
+
+.filtro-contenedor {
+    flex: 1;
+    margin-right: 10px;
+    max-width: calc(100% - 40px);
+}
+
+.filtro-input {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    width: 100%;
+    font-size: 14px;
+    transition: border-color 0.3s;
+    min-width: 300px;
+}
+
+.filtro-input:focus {
+    outline: none;
+    border-color: #E1B8E2;
+    box-shadow: 0 0 0 2px rgba(225, 184, 226, 0.25);
+}
+
+.filtro-input::placeholder {
+    color: #999;
+}
+
+.btn-agregar-contenedor {
+    display: flex;
+    align-items: center;
+}
+
+.btn-agregar {
+    background-color: #E1B8E2;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 24px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s;
+}
+
+.btn-agregar:hover {
+    background-color: #d1a8d2;
+} 

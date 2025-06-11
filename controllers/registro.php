@@ -6,28 +6,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nombre = $_POST['nombre'];
     $apellido = $_POST['apellido'];
     $usuario = $_POST['usuario'];
-    $contraseña = $_POST['contraseña'];
-    $confirmar_contraseña = $_POST['confirmar_contraseña'];
+    $contrasena = $_POST['contrasena'];
+    $confirmar_contrasena = $_POST['confirmar_contrasena'];
     $email = $_POST['email'];
 
     // Verificar si las contraseñas coinciden
-    if ($contraseña !== $confirmar_contraseña) {
+    if ($contrasena !== $confirmar_contrasena) {
         $error = "Las contraseñas no coinciden.";
     } else {
         // Verificar si el usuario ya existe
-        $check_sql = "SELECT * FROM usuarios WHERE usuario = ? OR email = ?";
+        $check_sql = "SELECT * FROM usuarios WHERE usuario = ? OR email = ? OR cedula = ?";
         $check_stmt = $conexion->prepare($check_sql);
-        $check_stmt->bind_param("ss", $usuario, $email);
+        $check_stmt->bind_param("sss", $usuario, $email, $cedula);
         $check_stmt->execute();
         $result = $check_stmt->get_result();
 
         if ($result->num_rows > 0) {
-            $error = "El usuario o email ya está registrado.";
+            $row = $result->fetch_assoc();
+            if ($row['cedula'] === $cedula) {
+                $error = "La cédula ya está registrada.";
+            } else if ($row['usuario'] === $usuario) {
+                $error = "El usuario ya está registrado.";
+            } else {
+                $error = "El email ya está registrado.";
+            }
         } else {
             // Insertar nuevo usuario
-            $sql = "INSERT INTO usuarios (cedula, nombre, apellido, usuario, contraseña, email) VALUES (?, ?, ?, ?, ?, ?)";
+            $sql = "INSERT INTO usuarios (cedula, nombre, apellido, usuario, contrasena, email) VALUES (?, ?, ?, ?, ?, ?)";
             $stmt = $conexion->prepare($sql);
-            $stmt->bind_param("ssssss", $cedula, $nombre, $apellido, $usuario, $contraseña, $email);
+            $stmt->bind_param("ssssss", $cedula, $nombre, $apellido, $usuario, $contrasena, $email);
 
             if ($stmt->execute()) {
                 header("Location: login.php?registro=exitoso");
@@ -213,7 +220,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <form method="POST" action="registro.php">
                 <div class="form-group">
                     <label for="cedula">Cédula:</label>
-                    <input type="text" id="cedula" name="cedula" required>
+                    <input type="text" id="cedula" name="cedula" required onkeyup="verificarCedula(this.value)">
+                    <span id="cedula-error" class="error-mensaje"></span>
                 </div>
                 <div class="form-group">
                     <label for="nombre">Nombre:</label>
@@ -234,12 +242,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <span id="email-error" class="error-mensaje"></span>
                 </div>
                 <div class="form-group">
-                    <label for="contraseña">Contraseña:</label>
-                    <input type="password" id="contraseña" name="contraseña" required>
+                    <label for="contrasena">Contraseña:</label>
+                    <input type="password" id="contrasena" name="contrasena" required>
                 </div>
                 <div class="form-group">
-                    <label for="confirmar_contraseña">Confirmar Contraseña:</label>
-                    <input type="password" id="confirmar_contraseña" name="confirmar_contraseña" required>
+                    <label for="confirmar_contrasena">Confirmar Contraseña:</label>
+                    <input type="password" id="confirmar_contrasena" name="confirmar_contrasena" required>
                 </div>
                 <button type="submit">Registrarse</button>
 
@@ -255,6 +263,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <script>
+        function verificarCedula(cedula) {
+            if (cedula.length < 3) return;
+            
+            fetch('verificar_cedula.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'cedula=' + encodeURIComponent(cedula)
+            })
+            .then(response => response.json())
+            .then(data => {
+                const errorElement = document.getElementById('cedula-error');
+                if (data.exists) {
+                    errorElement.textContent = 'Esta cédula ya está registrada';
+                    errorElement.className = 'error-mensaje';
+                    document.getElementById('cedula').setCustomValidity('Esta cédula ya está registrada');
+                } else {
+                    errorElement.textContent = 'Cédula disponible';
+                    errorElement.className = 'success-mensaje';
+                    document.getElementById('cedula').setCustomValidity('');
+                }
+            });
+        }
+
         function verificarUsuario(usuario) {
             if (usuario.length < 3) return;
             
@@ -309,6 +342,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         document.querySelector('form').addEventListener('submit', function(e) {
             const usuario = document.getElementById('usuario').value;
             const email = document.getElementById('email').value;
+            const cedula = document.getElementById('cedula').value;
             
             // Verificar una última vez antes de enviar
             Promise.all([
@@ -325,9 +359,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         'Content-Type': 'application/x-www-form-urlencoded',
                     },
                     body: 'email=' + encodeURIComponent(email)
+                }).then(response => response.json()),
+                fetch('verificar_cedula.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'cedula=' + encodeURIComponent(cedula)
                 }).then(response => response.json())
-            ]).then(([usuarioData, emailData]) => {
-                if (usuarioData.exists || emailData.exists) {
+            ]).then(([usuarioData, emailData, cedulaData]) => {
+                if (usuarioData.exists || emailData.exists || cedulaData.exists) {
                     e.preventDefault();
                     alert('Por favor, corrija los errores antes de continuar.');
                 }
