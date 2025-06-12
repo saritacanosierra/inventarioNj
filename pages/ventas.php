@@ -2,7 +2,8 @@
 require '../conexion.php';
 
 $sql = "SELECT v.*, p.nombre as nombre_producto, p.codigo as codigo_producto, 
-        DATE_FORMAT(v.fecha_venta, '%Y-%m-%d %H:%i:%s') as fecha_venta 
+        DATE_FORMAT(v.fecha_venta, '%Y-%m-%d %H:%i:%s') as fecha_venta,
+        p.stock as stock_actual
         FROM ventas v 
         JOIN productos p ON v.id_producto = p.id 
         ORDER BY v.fecha_venta DESC";
@@ -350,6 +351,44 @@ if (!$resultado) {
         .tabla-ventas-mensuales tbody tr:hover {
             background-color: #f5f5f5;
         }
+
+        /* Estilos para productos con bajo stock */
+        .stock-bajo {
+            color: #ffd700;
+            font-weight: bold;
+            animation: parpadeo 2s infinite;
+            background-color: #fff8dc;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+
+        @keyframes parpadeo {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        .stock-bajo::after {
+            content: "⚠️";
+            margin-left: 5px;
+        }
+
+        .btn-factura {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 5px;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-factura .material-icons {
+            color: #4CAF50;
+        }
+
+        .btn-factura:hover .material-icons {
+            color: #388E3C;
+        }
     </style>
 </head>
 <body>
@@ -380,9 +419,10 @@ if (!$resultado) {
                             <th>Fecha</th>
                             <th>Código Producto</th>
                             <th>Producto</th>
-                            <th>Cantidad</th>
+                            <th>Stock</th>
                             <th>Precio Unitario</th>
                             <th>Total</th>
+                            <th>Tipo de Pago</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
@@ -395,16 +435,32 @@ if (!$resultado) {
                                     echo $fecha->format('d/n/Y H:i');
                                 ?></td>
                                 <td><?php echo $venta['codigo_producto']; ?></td>
-                                <td><?php echo $venta['nombre_producto']; ?></td>
+                                <td>
+                                    <?php 
+                                    echo $venta['nombre_producto'];
+                                    if ($venta['stock_actual'] == 1) {
+                                        echo ' <span class="stock-bajo">(Última unidad disponible)</span>';
+                                    }
+                                    ?>
+                                </td>
                                 <td><?php echo $venta['cantidad']; ?></td>
                                 <td>$<?php echo number_format($venta['precio_unitario'], 2); ?></td>
                                 <td>$<?php echo number_format($venta['total'], 2); ?></td>
+                                <td>
+                                    <?php 
+                                    $tipo_pago = $venta['tipo_pago'] ?? 'No especificado';
+                                    echo ucfirst($tipo_pago);
+                                    ?>
+                                </td>
                                 <td class="acciones">
                                     <button onclick="abrirModalEditar(<?php echo htmlspecialchars(json_encode($venta)); ?>)" class="btn-editar">
                                         <span class="material-icons">edit</span>
                                     </button>
                                     <a href="../controllers/eliminar_venta.php?id=<?php echo $venta['id']; ?>" class="btn-eliminar" onclick="return confirm('¿Estás seguro de eliminar esta venta?')">
                                         <span class="material-icons">delete</span>
+                                    </a>
+                                    <a href="../controllers/generar_factura.php?id=<?php echo $venta['id']; ?>" class="btn-factura" target="_blank">
+                                        <span class="material-icons">receipt</span>
                                     </a>
                                 </td>
                             </tr>
@@ -473,6 +529,14 @@ if (!$resultado) {
                     <label for="total">Total:</label>
                     <input type="number" id="total" name="total" step="0.01" readonly>
                 </div>
+                <div class="form-group">
+                    <label for="tipo_pago">Tipo de Pago:</label>
+                    <select id="tipo_pago" name="tipo_pago" required>
+                        <option value="">Seleccione el tipo de pago</option>
+                        <option value="efectivo">Efectivo</option>
+                        <option value="transferencia">Transferencia</option>
+                    </select>
+                </div>
                 <div class="form-buttons">
                     <button type="submit" class="btn-guardar">Guardar</button>
                     <button type="button" class="btn-cancelar" onclick="cerrarModalInsertar()">Cancelar</button>
@@ -515,6 +579,13 @@ if (!$resultado) {
                 <div class="form-group">
                     <label for="edit_total">Total:</label>
                     <input type="number" id="edit_total" name="total" step="0.01" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="edit_tipo_pago">Tipo de Pago:</label>
+                    <select id="edit_tipo_pago" name="tipo_pago" required>
+                        <option value="efectivo">Efectivo</option>
+                        <option value="transferencia">Transferencia</option>
+                    </select>
                 </div>
                 <div class="form-buttons">
                     <button type="submit" class="btn-guardar">Guardar Cambios</button>
@@ -604,6 +675,7 @@ if (!$resultado) {
             document.getElementById('edit_cantidad').value = venta.cantidad;
             document.getElementById('edit_precio_unitario').value = venta.precio_unitario;
             document.getElementById('edit_total').value = venta.total;
+            document.getElementById('edit_tipo_pago').value = venta.tipo_pago || 'efectivo';
         }
 
         function cerrarModalEditar() {
@@ -661,19 +733,54 @@ if (!$resultado) {
             }
         }
 
-        // Manejar el envío del formulario de insertar
+        // Función para actualizar la tabla después de una venta
+        function actualizarTablaVentas(nuevaVenta) {
+            const tbody = document.getElementById('tabla-ventas');
+            const tr = document.createElement('tr');
+            
+            // Crear el contenido de la celda del producto con el indicador de stock bajo si es necesario
+            let productoCell = `${nuevaVenta.nombre_producto}`;
+            if (nuevaVenta.stock_actual == 1) {
+                productoCell += ` <span class="stock-bajo">(Última unidad disponible)</span>`;
+            }
+
+            tr.innerHTML = `
+                <td>${nuevaVenta.id}</td>
+                <td>${new Date(nuevaVenta.fecha_venta).toLocaleString('es-ES', {
+                    day: 'numeric',
+                    month: 'numeric',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                })}</td>
+                <td>${nuevaVenta.codigo_producto}</td>
+                <td>${productoCell}</td>
+                <td>${nuevaVenta.cantidad}</td>
+                <td>$${parseFloat(nuevaVenta.precio_unitario).toFixed(2)}</td>
+                <td>$${parseFloat(nuevaVenta.total).toFixed(2)}</td>
+                <td>${nuevaVenta.tipo_pago ? nuevaVenta.tipo_pago.charAt(0).toUpperCase() + nuevaVenta.tipo_pago.slice(1) : 'No especificado'}</td>
+                <td class="acciones">
+                    <button onclick="abrirModalEditar(${JSON.stringify(nuevaVenta)})" class="btn-editar">
+                        <span class="material-icons">edit</span>
+                    </button>
+                    <a href="../controllers/eliminar_venta.php?id=${nuevaVenta.id}" class="btn-eliminar" onclick="return confirm('¿Estás seguro de eliminar esta venta?')">
+                        <span class="material-icons">delete</span>
+                    </a>
+                    <a href="../controllers/generar_factura.php?id=${nuevaVenta.id}" class="btn-factura" target="_blank">
+                        <span class="material-icons">receipt</span>
+                    </a>
+                </td>
+            `;
+            
+            tbody.insertBefore(tr, tbody.firstChild);
+        }
+
+        // Modificar el manejador del formulario de insertar para usar la nueva función
         document.getElementById('formInsertar').addEventListener('submit', function(e) {
             e.preventDefault();
             
             const formData = new FormData(this);
-            // Asegurarse de que la fecha esté en el formato correcto
-            const fechaVenta = formData.get('fecha_venta');
-            if (!fechaVenta) {
-                alert('Por favor seleccione una fecha');
-                return;
-            }
-            formData.set('fecha_venta', fechaVenta.replace('T', ' '));
-            
             const mensajeError = document.getElementById('mensaje-error-insertar');
             mensajeError.style.display = 'none';
             
@@ -684,35 +791,7 @@ if (!$resultado) {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Agregar la nueva venta a la tabla
-                    const tbody = document.getElementById('tabla-ventas');
-                    const newRow = document.createElement('tr');
-                    newRow.innerHTML = `
-                        <td>${data.id}</td>
-                        <td>${new Date(data.fecha_venta).toLocaleString('es-ES', {
-                            day: 'numeric',
-                            month: 'numeric',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            hour12: false
-                        })}</td>
-                        <td>${data.codigo_producto}</td>
-                        <td>${data.nombre_producto}</td>
-                        <td>${data.cantidad}</td>
-                        <td>$${parseFloat(data.precio_unitario).toFixed(2)}</td>
-                        <td>$${parseFloat(data.total).toFixed(2)}</td>
-                        <td class="acciones">
-                            <button onclick="abrirModalEditar(${JSON.stringify(data)})" class="btn-editar">
-                                <span class="material-icons">edit</span>
-                            </button>
-                            <a href="../controllers/eliminar_venta.php?id=${data.id}" class="btn-eliminar" onclick="return confirm('¿Estás seguro de eliminar esta venta?')">
-                                <span class="material-icons">delete</span>
-                            </a>
-                        </td>
-                    `;
-                    tbody.insertBefore(newRow, tbody.firstChild);
-                    
+                    actualizarTablaVentas(data);
                     cerrarModalInsertar();
                     alert('Venta registrada exitosamente');
                     location.reload(); // Recargar para actualizar el stock en los selectores
@@ -778,12 +857,16 @@ if (!$resultado) {
                             <td>${data.cantidad}</td>
                             <td>$${parseFloat(data.precio_unitario).toFixed(2)}</td>
                             <td>$${parseFloat(data.total).toFixed(2)}</td>
+                            <td>${data.tipo_pago ? data.tipo_pago.charAt(0).toUpperCase() + data.tipo_pago.slice(1) : 'No especificado'}</td>
                             <td class="acciones">
                                 <button onclick="abrirModalEditar(${JSON.stringify(data)})" class="btn-editar">
                                     <span class="material-icons">edit</span>
                                 </button>
                                 <a href="../controllers/eliminar_venta.php?id=${data.id}" class="btn-eliminar" onclick="return confirm('¿Estás seguro de eliminar esta venta?')">
                                     <span class="material-icons">delete</span>
+                                </a>
+                                <a href="../controllers/generar_factura.php?id=${data.id}" class="btn-factura" target="_blank">
+                                    <span class="material-icons">receipt</span>
                                 </a>
                             </td>
                         `;

@@ -1,95 +1,105 @@
 <?php
-require '../conexion.php';
+require_once '../conexion.php';
 
 header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id = $_POST['id'];
+    $fecha_venta = $_POST['fecha_venta'];
     $id_producto = $_POST['id_producto'];
     $cantidad = $_POST['cantidad'];
     $precio_unitario = $_POST['precio_unitario'];
     $total = $_POST['total'];
-
-    // Iniciar transacción
-    $conexion->begin_transaction();
+    $tipo_pago = $_POST['tipo_pago'];
 
     try {
-        // Obtener la venta actual
-        $sql_venta_actual = "SELECT id_producto, cantidad FROM ventas WHERE id = ?";
+        // Iniciar transacción
+        $conexion->begin_transaction();
+
+        // Obtener la venta actual para comparar cantidades
+        $sql_venta_actual = "SELECT cantidad, id_producto FROM ventas WHERE id = ?";
         $stmt_venta_actual = $conexion->prepare($sql_venta_actual);
         $stmt_venta_actual->bind_param("i", $id);
         $stmt_venta_actual->execute();
-        $result_venta_actual = $stmt_venta_actual->get_result();
-        $venta_actual = $result_venta_actual->fetch_assoc();
+        $venta_actual = $stmt_venta_actual->get_result()->fetch_assoc();
 
-        // Obtener stock actual del producto
+        // Si el producto cambió, devolver el stock del producto anterior
+        if ($venta_actual['id_producto'] != $id_producto) {
+            $sql_devolver_stock = "UPDATE productos SET stock = stock + ? WHERE id = ?";
+            $stmt_devolver = $conexion->prepare($sql_devolver_stock);
+            $stmt_devolver->bind_param("ii", $venta_actual['cantidad'], $venta_actual['id_producto']);
+            $stmt_devolver->execute();
+        }
+
+        // Verificar el stock del nuevo producto
         $sql_stock = "SELECT stock FROM productos WHERE id = ?";
         $stmt_stock = $conexion->prepare($sql_stock);
         $stmt_stock->bind_param("i", $id_producto);
         $stmt_stock->execute();
-        $result_stock = $stmt_stock->get_result();
-        $producto = $result_stock->fetch_assoc();
+        $resultado_stock = $stmt_stock->get_result();
+        $producto = $resultado_stock->fetch_assoc();
 
-        // Calcular diferencia de stock
-        $diferencia_stock = 0;
-        if ($venta_actual['id_producto'] == $id_producto) {
-            // Mismo producto, solo ajustar la diferencia
-            $diferencia_stock = $venta_actual['cantidad'] - $cantidad;
-        } else {
-            // Producto diferente, devolver stock anterior y restar nuevo
-            $diferencia_stock = $venta_actual['cantidad'] - $cantidad;
-            
-            // Devolver stock al producto anterior
-            $sql_update_stock_anterior = "UPDATE productos SET stock = stock + ? WHERE id = ?";
-            $stmt_update_anterior = $conexion->prepare($sql_update_stock_anterior);
-            $stmt_update_anterior->bind_param("ii", $venta_actual['cantidad'], $venta_actual['id_producto']);
-            $stmt_update_anterior->execute();
-        }
-
-        // Verificar si hay suficiente stock para la nueva cantidad
-        if ($producto['stock'] + $diferencia_stock < 0) {
-            throw new Exception("No hay suficiente stock disponible para esta operación.");
+        // Calcular la diferencia de stock necesaria
+        $diferencia_stock = $cantidad - $venta_actual['cantidad'];
+        if ($producto['stock'] < $diferencia_stock) {
+            throw new Exception("No hay suficiente stock disponible");
         }
 
         // Actualizar la venta
-        $sql_venta = "UPDATE ventas SET id_producto = ?, cantidad = ?, precio_unitario = ?, total = ? WHERE id = ?";
-        $stmt_venta = $conexion->prepare($sql_venta);
-        $stmt_venta->bind_param("iiddi", $id_producto, $cantidad, $precio_unitario, $total, $id);
-        $stmt_venta->execute();
+        $sql = "UPDATE ventas SET 
+                fecha_venta = ?, 
+                id_producto = ?, 
+                cantidad = ?, 
+                precio_unitario = ?, 
+                total = ?,
+                tipo_pago = ?
+                WHERE id = ?";
+        $stmt = $conexion->prepare($sql);
+        $stmt->bind_param("siiddsi", $fecha_venta, $id_producto, $cantidad, $precio_unitario, $total, $tipo_pago, $id);
+        $stmt->execute();
 
-        // Actualizar el stock del producto
-        $sql_update_stock = "UPDATE productos SET stock = stock - ? WHERE id = ?";
-        $stmt_update = $conexion->prepare($sql_update_stock);
-        $stmt_update->bind_param("ii", $cantidad, $id_producto);
+        // Actualizar el stock
+        $sql_update = "UPDATE productos SET stock = stock - ? WHERE id = ?";
+        $stmt_update = $conexion->prepare($sql_update);
+        $stmt_update->bind_param("ii", $diferencia_stock, $id_producto);
         $stmt_update->execute();
 
         // Obtener información del producto para la respuesta
-        $sql_producto = "SELECT codigo, nombre FROM productos WHERE id = ?";
+        $sql_producto = "SELECT p.*, c.nombre as categoria 
+                        FROM productos p 
+                        LEFT JOIN categoria c ON p.id_categoria = c.id 
+                        WHERE p.id = ?";
         $stmt_producto = $conexion->prepare($sql_producto);
         $stmt_producto->bind_param("i", $id_producto);
         $stmt_producto->execute();
-        $result_producto = $stmt_producto->get_result();
-        $info_producto = $result_producto->fetch_assoc();
+        $producto_info = $stmt_producto->get_result()->fetch_assoc();
 
         // Confirmar transacción
         $conexion->commit();
 
-        echo json_encode([
+        // Preparar la respuesta
+        $respuesta = [
             'success' => true,
             'id' => $id,
-            'fecha_venta' => date('Y-m-d H:i:s'),
-            'codigo_producto' => $info_producto['codigo'],
-            'nombre_producto' => $info_producto['nombre'],
+            'fecha_venta' => $fecha_venta,
+            'id_producto' => $id_producto,
+            'codigo_producto' => $producto_info['codigo'],
+            'nombre_producto' => $producto_info['nombre'],
             'cantidad' => $cantidad,
             'precio_unitario' => $precio_unitario,
-            'total' => $total
-        ]);
+            'total' => $total,
+            'tipo_pago' => $tipo_pago
+        ];
+
+        echo json_encode($respuesta);
+
     } catch (Exception $e) {
         // Revertir transacción en caso de error
         $conexion->rollback();
+        
         echo json_encode([
             'success' => false,
-            'message' => $e->getMessage()
+            'message' => 'Error al actualizar la venta: ' . $e->getMessage()
         ]);
     }
 } else {
@@ -97,4 +107,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'success' => false,
         'message' => 'Método no permitido'
     ]);
-} 
+}
+
+$conexion->close();
+?> 
