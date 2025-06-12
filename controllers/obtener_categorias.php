@@ -5,7 +5,7 @@ header('Content-Type: application/json');
 
 try {
     // Obtener todas las categorías ordenadas por nombre
-    $sql = "SELECT id, codigo, nombre, ubicacion FROM categorias ORDER BY nombre";
+    $sql = "SELECT id, codigo, nombre FROM categoria ORDER BY nombre";
     $resultado = $conexion->query($sql);
 
     if (!$resultado) {
@@ -17,8 +17,7 @@ try {
         $categorias[] = [
             'id' => (int)$categoria['id'],
             'codigo' => $categoria['codigo'],
-            'nombre' => $categoria['nombre'],
-            'ubicacion' => $categoria['ubicacion']
+            'nombre' => $categoria['nombre']
         ];
     }
 
@@ -32,15 +31,15 @@ try {
         error_log('No se encontraron categorías en la base de datos');
         
         // Verificar si la tabla existe
-        $sql_check = "SHOW TABLES LIKE 'categorias'";
+        $sql_check = "SHOW TABLES LIKE 'categoria'";
         $result_check = $conexion->query($sql_check);
         if ($result_check->num_rows === 0) {
-            error_log('La tabla categorias no existe');
+            error_log('La tabla categoria no existe');
         } else {
             // Si la tabla existe pero no hay datos, mostrar la estructura
-            $sql_structure = "DESCRIBE categorias";
+            $sql_structure = "DESCRIBE categoria";
             $result_structure = $conexion->query($sql_structure);
-            error_log('Estructura de la tabla categorias:');
+            error_log('Estructura de la tabla categoria:');
             while ($row = $result_structure->fetch_assoc()) {
                 error_log(json_encode($row));
             }

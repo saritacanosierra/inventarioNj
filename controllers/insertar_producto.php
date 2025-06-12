@@ -94,9 +94,7 @@ try {
     // Obtener la información de la categoría
     $categoria = null;
     if ($id_categoria) {
-        $sql_categoria = "SELECT c.nombre as categoria, c.codigo as codigo_categoria, c.ubicacion 
-                         FROM categorias c 
-                         WHERE c.id = ?";
+        $sql_categoria = "SELECT nombre as categoria FROM categoria WHERE id = ?";
         $stmt_categoria = $conexion->prepare($sql_categoria);
         $stmt_categoria->bind_param("i", $id_categoria);
         $stmt_categoria->execute();
@@ -114,9 +112,7 @@ try {
         'stock' => $stock,
         'foto' => $foto,
         'id_categoria' => $id_categoria,
-        'categoria' => $categoria ? $categoria['categoria'] : null,
-        'codigo_categoria' => $categoria ? $categoria['codigo_categoria'] : null,
-        'ubicacion' => $categoria ? $categoria['ubicacion'] : null
+        'categoria' => $categoria ? $categoria['categoria'] : null
     ]);
 
 } catch (Exception $e) {

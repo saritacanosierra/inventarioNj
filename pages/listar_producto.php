@@ -1,7 +1,7 @@
 <?php
 require '../conexion.php';
 
-$sql = "SELECT p.id, p.codigo, p.nombre, p.precio, p.stock, p.foto, p.id_categoria, c.nombre as categoria, c.codigo as codigo_categoria, c.ubicacion 
+$sql = "SELECT p.id, p.codigo, p.nombre, p.precio, p.stock, p.foto, p.id_categoria, c.nombre as categoria, c.codigo as codigo_categoria 
 FROM productos p 
 LEFT JOIN categorias c ON p.id_categoria = c.id 
 ORDER BY p.nombre";
@@ -213,6 +213,27 @@ if (!$resultado) {
         select option {
             padding: 8px;
         }
+
+        /* Estilo para stock bajo (1 unidad) */
+        .stock-bajo {
+            background-color: #fff3cd !important;
+        }
+        
+        /* Estilo para stock agotado (0 unidades) */
+        .stock-agotado {
+            background-color: #f8d7da !important;
+            opacity: 0.7;
+        }
+        
+        /* Estilo para botón deshabilitado */
+        .btn-deshabilitado {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .btn-deshabilitado:hover {
+            opacity: 0.5;
+        }
     </style>
 
 </head>
@@ -245,21 +266,26 @@ if (!$resultado) {
                                 <th>Precio</th>
                                 <th>Stock</th>
                                 <th>Categoría</th>
-                                <th>Ubicación</th>
                                 <th>Foto</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <?php while ($producto = $resultado->fetch_assoc()): ?>
-                                <tr>
+                            <?php while ($producto = $resultado->fetch_assoc()): 
+                                $stockClass = '';
+                                if ($producto['stock'] == 0) {
+                                    $stockClass = 'stock-agotado';
+                                } elseif ($producto['stock'] == 1) {
+                                    $stockClass = 'stock-bajo';
+                                }
+                            ?>
+                                <tr class="<?php echo $stockClass; ?>" <?php echo $producto['stock'] == 0 ? 'style="display: none;"' : ''; ?>>
                                     <td><?php echo $producto['id']; ?></td>
                                     <td><?php echo $producto['codigo']; ?></td>
                                     <td><?php echo $producto['nombre']; ?></td>
                                     <td><?php echo $producto['precio']; ?></td>
                                     <td><?php echo $producto['stock']; ?></td>
                                     <td><?php echo $producto['categoria'] ? $producto['categoria'] . ' (' . $producto['codigo_categoria'] . ')' : 'Sin categoría'; ?></td>
-                                    <td><?php echo $producto['ubicacion'] ?? 'N/A'; ?></td>
                                     <td class="celda-foto">
                                         <?php if (!empty($producto['foto'])): ?>
                                             <img src="../uploads/productos/<?php echo $producto['foto']; ?>" alt="Foto del producto" class="foto-producto">
@@ -313,13 +339,6 @@ if (!$resultado) {
                     <label for="id_categoria">Categoría:</label>
                     <select id="id_categoria" name="id_categoria" required>
                         <option value="">Seleccione una categoría</option>
-                        <?php
-                        $sql_categorias = "SELECT id, codigo, nombre, ubicacion FROM categorias ORDER BY nombre";
-                        $resultado_categorias = $conexion->query($sql_categorias);
-                        while ($categoria = $resultado_categorias->fetch_assoc()) {
-                            echo "<option value='" . $categoria['id'] . "'>" . $categoria['nombre'] . " (" . $categoria['codigo'] . ") - " . $categoria['ubicacion'] . "</option>";
-                        }
-                        ?>
                     </select>
                 </div>
                 <div class="form-group">
@@ -385,12 +404,39 @@ if (!$resultado) {
     </div>
 
     <script>
-        // Funciones para el modal de insertar
+        // Función para cargar las categorías
+        function cargarCategorias() {
+            fetch('../controllers/obtener_categorias.php')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.categorias) {
+                        const select = document.getElementById('id_categoria');
+                        select.innerHTML = '<option value="">Seleccione una categoría</option>';
+                        
+                        data.categorias.forEach(categoria => {
+                            const option = document.createElement('option');
+                            option.value = categoria.id;
+                            option.textContent = `${categoria.nombre} (${categoria.codigo})`;
+                            select.appendChild(option);
+                        });
+                    } else {
+                        console.error('Error al cargar categorías:', data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error al cargar categorías:', error);
+                });
+        }
+
+        // Función para abrir el modal de insertar
         function abrirModalInsertar() {
             document.getElementById('modalInsertar').style.display = 'block';
             document.getElementById('mensaje-error-insertar').style.display = 'none';
+            // Cargar las categorías actualizadas al abrir el modal
+            cargarCategorias();
         }
 
+        // Función para cerrar el modal de insertar
         function cerrarModalInsertar() {
             document.getElementById('modalInsertar').style.display = 'none';
             document.getElementById('formInsertar').reset();
@@ -403,15 +449,16 @@ if (!$resultado) {
             document.getElementById('modalEditar').style.display = 'block';
             document.getElementById('mensaje-error-editar').style.display = 'none';
             
-            // Cargar las categorías actualizadas
-            cargarCategorias();
+            // Cargar las categorías actualizadas al abrir el modal
+            cargarCategoriasEditar(producto);
             
-            // Llenar el resto del formulario con los datos del producto
+            // Llenar el formulario con los datos del producto
             document.getElementById('edit-id').value = producto.id;
             document.getElementById('edit-codigo').value = producto.codigo;
             document.getElementById('edit-nombre').value = producto.nombre;
             document.getElementById('edit-precio').value = producto.precio;
             document.getElementById('edit-stock').value = producto.stock;
+            
             document.getElementById('edit-foto-actual').value = producto.foto;
             
             // Mostrar la imagen actual si existe
@@ -422,17 +469,10 @@ if (!$resultado) {
                 img.src = `../uploads/productos/${producto.foto}`;
                 editImagePreview.appendChild(img);
             }
-
-            // Establecer la categoría seleccionada después de cargar las categorías
-            setTimeout(() => {
-                if (producto.id_categoria) {
-                    document.getElementById('edit-id_categoria').value = producto.id_categoria;
-                }
-            }, 100);
         }
 
-        // Función para cargar las categorías en el select
-        function cargarCategorias() {
+        // Función para cargar las categorías en el modal de editar
+        function cargarCategoriasEditar(producto) {
             fetch('../controllers/obtener_categorias.php')
                 .then(response => response.json())
                 .then(data => {
@@ -443,9 +483,14 @@ if (!$resultado) {
                         data.categorias.forEach(categoria => {
                             const option = document.createElement('option');
                             option.value = categoria.id;
-                            option.textContent = `${categoria.nombre} (${categoria.codigo}) - ${categoria.ubicacion}`;
+                            option.textContent = `${categoria.nombre} (${categoria.codigo})`;
                             select.appendChild(option);
                         });
+
+                        // Establecer la categoría seleccionada
+                        if (producto.id_categoria) {
+                            select.value = producto.id_categoria;
+                        }
                     } else {
                         console.error('Error al cargar categorías:', data.message);
                     }
@@ -454,16 +499,6 @@ if (!$resultado) {
                     console.error('Error al cargar categorías:', error);
                 });
         }
-
-        // Cargar categorías al abrir la página
-        document.addEventListener('DOMContentLoaded', function() {
-            cargarCategorias();
-        });
-
-        // Actualizar categorías cada vez que se abre el modal
-        document.getElementById('modalEditar').addEventListener('show.bs.modal', function () {
-            cargarCategorias();
-        });
 
         function cerrarModalEditar() {
             document.getElementById('modalEditar').style.display = 'none';
@@ -515,7 +550,21 @@ if (!$resultado) {
             }
         });
 
-        // Manejar el envío del formulario de insertar
+        // Función para actualizar la apariencia de la fila según el stock
+        function actualizarAparienciaFila(row, stock) {
+            row.classList.remove('stock-bajo', 'stock-agotado');
+            if (stock == 0) {
+                row.classList.add('stock-agotado');
+                row.style.display = 'none';
+            } else if (stock == 1) {
+                row.classList.add('stock-bajo');
+                row.style.display = '';
+            } else {
+                row.style.display = '';
+            }
+        }
+
+        // Modificar el manejo del formulario de insertar
         document.getElementById('formInsertar').addEventListener('submit', function(e) {
             e.preventDefault();
             
@@ -530,8 +579,7 @@ if (!$resultado) {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Agregar el nuevo producto a la tabla
-                    const tbody = document.getElementById('tabla-productos');
+                    const tbody = document.getElementById('tabla-productos').getElementsByTagName('tbody')[0];
                     const newRow = document.createElement('tr');
                     newRow.innerHTML = `
                         <td>${data.id}</td>
@@ -540,7 +588,6 @@ if (!$resultado) {
                         <td>${data.precio}</td>
                         <td>${data.stock}</td>
                         <td>${data.categoria ? data.categoria + ' (' + data.codigo_categoria + ')' : 'Sin categoría'}</td>
-                        <td>${data.ubicacion || 'N/A'}</td>
                         <td>
                             ${data.foto ? `<img src="../uploads/productos/${data.foto}" alt="Foto del producto" style="max-width: 50px; max-height: 50px;">` : ''}
                         </td>
@@ -554,6 +601,7 @@ if (!$resultado) {
                         </td>
                     `;
                     tbody.insertBefore(newRow, tbody.firstChild);
+                    actualizarAparienciaFila(newRow, data.stock);
                     
                     cerrarModalInsertar();
                     alert('Producto agregado exitosamente');
@@ -569,7 +617,7 @@ if (!$resultado) {
             });
         });
 
-        // Manejar el envío del formulario de editar
+        // Modificar el manejo del formulario de editar
         document.getElementById('formEditar').addEventListener('submit', function(e) {
             e.preventDefault();
             
@@ -584,7 +632,6 @@ if (!$resultado) {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Actualizar la fila en la tabla
                     const rows = document.querySelectorAll('#tabla-productos tbody tr');
                     let targetRow = null;
                     
@@ -603,7 +650,6 @@ if (!$resultado) {
                             <td>${data.precio}</td>
                             <td>${data.stock}</td>
                             <td>${data.categoria ? data.categoria + ' (' + data.codigo_categoria + ')' : 'Sin categoría'}</td>
-                            <td>${data.ubicacion || 'N/A'}</td>
                             <td>
                                 ${data.foto ? `<img src="../uploads/productos/${data.foto}" alt="Foto del producto" style="max-width: 50px; max-height: 50px;">` : ''}
                             </td>
@@ -616,6 +662,7 @@ if (!$resultado) {
                                 </a>
                             </td>
                         `;
+                        actualizarAparienciaFila(targetRow, data.stock);
                     }
                     
                     cerrarModalEditar();

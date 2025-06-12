@@ -68,7 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $categoria = null;
         if ($id_categoria) {
             $sql_categoria = "SELECT c.nombre as categoria, c.codigo as codigo_categoria, c.ubicacion 
-                             FROM categorias c 
+                             FROM categoria c 
                              WHERE c.id = ?";
             $stmt_categoria = $conexion->prepare($sql_categoria);
             $stmt_categoria->bind_param("i", $id_categoria);
