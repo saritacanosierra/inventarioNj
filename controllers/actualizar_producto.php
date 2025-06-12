@@ -9,6 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nombre = $_POST['nombre'];
     $precio = $_POST['precio'];
     $stock = $_POST['stock'];
+    $id_categoria = !empty($_POST['id_categoria']) ? $_POST['id_categoria'] : null;
     $foto_actual = $_POST['foto_actual'];
     
     // Manejar la subida de la nueva imagen
@@ -59,10 +60,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // Actualizar el producto
-    $stmt = $conexion->prepare("UPDATE productos SET codigo = ?, nombre = ?, precio = ?, stock = ?, foto = ? WHERE id = ?");
-    $stmt->bind_param("sssssi", $codigo, $nombre, $precio, $stock, $foto, $id);
+    $stmt = $conexion->prepare("UPDATE productos SET codigo = ?, nombre = ?, precio = ?, stock = ?, foto = ?, id_categoria = ? WHERE id = ?");
+    $stmt->bind_param("sssssii", $codigo, $nombre, $precio, $stock, $foto, $id_categoria, $id);
 
     if ($stmt->execute()) {
+        // Obtener la información de la categoría
+        $categoria = null;
+        if ($id_categoria) {
+            $sql_categoria = "SELECT c.nombre as categoria, c.codigo as codigo_categoria, c.ubicacion 
+                             FROM categorias c 
+                             WHERE c.id = ?";
+            $stmt_categoria = $conexion->prepare($sql_categoria);
+            $stmt_categoria->bind_param("i", $id_categoria);
+            $stmt_categoria->execute();
+            $result_categoria = $stmt_categoria->get_result();
+            $categoria = $result_categoria->fetch_assoc();
+        }
+
         echo json_encode([
             'success' => true,
             'message' => 'Producto actualizado correctamente',
@@ -71,7 +85,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'nombre' => $nombre,
             'precio' => $precio,
             'stock' => $stock,
-            'foto' => $foto
+            'foto' => $foto,
+            'id_categoria' => $id_categoria,
+            'categoria' => $categoria ? $categoria['categoria'] : null,
+            'codigo_categoria' => $categoria ? $categoria['codigo_categoria'] : null,
+            'ubicacion' => $categoria ? $categoria['ubicacion'] : null
         ]);
     } else {
         echo json_encode([

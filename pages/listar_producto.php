@@ -1,7 +1,10 @@
 <?php
 require '../conexion.php';
 
-$sql = "SELECT id, codigo, nombre, precio, stock, foto FROM productos";
+$sql = "SELECT p.id, p.codigo, p.nombre, p.precio, p.stock, p.foto, p.id_categoria, c.nombre as categoria, c.codigo as codigo_categoria, c.ubicacion 
+FROM productos p 
+LEFT JOIN categorias c ON p.id_categoria = c.id 
+ORDER BY p.nombre";
 $resultado = $conexion->query($sql);
 
 if (!$resultado) {
@@ -190,6 +193,26 @@ if (!$resultado) {
             border-radius: 4px;
             padding: 5px;
         }
+
+        select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: white;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #E1B8E2;
+            box-shadow: 0 0 0 2px rgba(225, 184, 226, 0.25);
+        }
+
+        select option {
+            padding: 8px;
+        }
     </style>
 
 </head>
@@ -221,6 +244,8 @@ if (!$resultado) {
                                 <th>Nombre</th>
                                 <th>Precio</th>
                                 <th>Stock</th>
+                                <th>Categoría</th>
+                                <th>Ubicación</th>
                                 <th>Foto</th>
                                 <th>Acciones</th>
                             </tr>
@@ -233,6 +258,8 @@ if (!$resultado) {
                                     <td><?php echo $producto['nombre']; ?></td>
                                     <td><?php echo $producto['precio']; ?></td>
                                     <td><?php echo $producto['stock']; ?></td>
+                                    <td><?php echo $producto['categoria'] ? $producto['categoria'] . ' (' . $producto['codigo_categoria'] . ')' : 'Sin categoría'; ?></td>
+                                    <td><?php echo $producto['ubicacion'] ?? 'N/A'; ?></td>
                                     <td class="celda-foto">
                                         <?php if (!empty($producto['foto'])): ?>
                                             <img src="../uploads/productos/<?php echo $producto['foto']; ?>" alt="Foto del producto" class="foto-producto">
@@ -283,6 +310,19 @@ if (!$resultado) {
                     <input type="number" id="stock" name="stock" required>
                 </div>
                 <div class="form-group">
+                    <label for="id_categoria">Categoría:</label>
+                    <select id="id_categoria" name="id_categoria" required>
+                        <option value="">Seleccione una categoría</option>
+                        <?php
+                        $sql_categorias = "SELECT id, codigo, nombre, ubicacion FROM categorias ORDER BY nombre";
+                        $resultado_categorias = $conexion->query($sql_categorias);
+                        while ($categoria = $resultado_categorias->fetch_assoc()) {
+                            echo "<option value='" . $categoria['id'] . "'>" . $categoria['nombre'] . " (" . $categoria['codigo'] . ") - " . $categoria['ubicacion'] . "</option>";
+                        }
+                        ?>
+                    </select>
+                </div>
+                <div class="form-group">
                     <label for="foto">Foto:</label>
                     <input type="file" id="foto" name="foto" accept="image/*">
                     <div id="imagePreview" class="image-preview"></div>
@@ -321,6 +361,12 @@ if (!$resultado) {
                     <input type="number" id="edit-stock" name="stock" required>
                 </div>
                 <div class="form-group">
+                    <label for="edit-id_categoria">Categoría:</label>
+                    <select id="edit-id_categoria" name="id_categoria" required>
+                        <option value="">Seleccione una categoría</option>
+                    </select>
+                </div>
+                <div class="form-group">
                     <label for="edit-foto">Foto:</label>
                     <?php if (!empty($producto['foto'])): ?>
                         <div class="foto-actual">
@@ -357,7 +403,10 @@ if (!$resultado) {
             document.getElementById('modalEditar').style.display = 'block';
             document.getElementById('mensaje-error-editar').style.display = 'none';
             
-            // Llenar el formulario con los datos del producto
+            // Cargar las categorías actualizadas
+            cargarCategorias();
+            
+            // Llenar el resto del formulario con los datos del producto
             document.getElementById('edit-id').value = producto.id;
             document.getElementById('edit-codigo').value = producto.codigo;
             document.getElementById('edit-nombre').value = producto.nombre;
@@ -373,7 +422,48 @@ if (!$resultado) {
                 img.src = `../uploads/productos/${producto.foto}`;
                 editImagePreview.appendChild(img);
             }
+
+            // Establecer la categoría seleccionada después de cargar las categorías
+            setTimeout(() => {
+                if (producto.id_categoria) {
+                    document.getElementById('edit-id_categoria').value = producto.id_categoria;
+                }
+            }, 100);
         }
+
+        // Función para cargar las categorías en el select
+        function cargarCategorias() {
+            fetch('../controllers/obtener_categorias.php')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.categorias) {
+                        const select = document.getElementById('edit-id_categoria');
+                        select.innerHTML = '<option value="">Seleccione una categoría</option>';
+                        
+                        data.categorias.forEach(categoria => {
+                            const option = document.createElement('option');
+                            option.value = categoria.id;
+                            option.textContent = `${categoria.nombre} (${categoria.codigo}) - ${categoria.ubicacion}`;
+                            select.appendChild(option);
+                        });
+                    } else {
+                        console.error('Error al cargar categorías:', data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error al cargar categorías:', error);
+                });
+        }
+
+        // Cargar categorías al abrir la página
+        document.addEventListener('DOMContentLoaded', function() {
+            cargarCategorias();
+        });
+
+        // Actualizar categorías cada vez que se abre el modal
+        document.getElementById('modalEditar').addEventListener('show.bs.modal', function () {
+            cargarCategorias();
+        });
 
         function cerrarModalEditar() {
             document.getElementById('modalEditar').style.display = 'none';
@@ -449,6 +539,8 @@ if (!$resultado) {
                         <td>${data.nombre}</td>
                         <td>${data.precio}</td>
                         <td>${data.stock}</td>
+                        <td>${data.categoria ? data.categoria + ' (' + data.codigo_categoria + ')' : 'Sin categoría'}</td>
+                        <td>${data.ubicacion || 'N/A'}</td>
                         <td>
                             ${data.foto ? `<img src="../uploads/productos/${data.foto}" alt="Foto del producto" style="max-width: 50px; max-height: 50px;">` : ''}
                         </td>
@@ -510,6 +602,8 @@ if (!$resultado) {
                             <td>${data.nombre}</td>
                             <td>${data.precio}</td>
                             <td>${data.stock}</td>
+                            <td>${data.categoria ? data.categoria + ' (' + data.codigo_categoria + ')' : 'Sin categoría'}</td>
+                            <td>${data.ubicacion || 'N/A'}</td>
                             <td>
                                 ${data.foto ? `<img src="../uploads/productos/${data.foto}" alt="Foto del producto" style="max-width: 50px; max-height: 50px;">` : ''}
                             </td>

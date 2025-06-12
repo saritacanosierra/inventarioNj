@@ -73,13 +73,14 @@ try {
     $stmt_check->close();
 
     // Insertar en la base de datos
-    $sql = "INSERT INTO productos (codigo, nombre, precio, stock, foto) VALUES (?, ?, ?, ?, ?)";
+    $sql = "INSERT INTO productos (codigo, nombre, precio, stock, foto, id_categoria) VALUES (?, ?, ?, ?, ?, ?)";
     $stmt = $conexion->prepare($sql);
     if (!$stmt) {
         throw new Exception('Error al preparar la consulta de inserción: ' . $conexion->error);
     }
 
-    $stmt->bind_param("ssdis", $codigo, $nombre, $precio, $stock, $foto);
+    $id_categoria = !empty($_POST['id_categoria']) ? $_POST['id_categoria'] : null;
+    $stmt->bind_param("ssdisi", $codigo, $nombre, $precio, $stock, $foto, $id_categoria);
 
     if (!$stmt->execute()) {
         throw new Exception('Error al insertar el producto en la base de datos: ' . $stmt->error);
@@ -90,6 +91,19 @@ try {
         throw new Exception('Error al obtener el ID del producto insertado');
     }
 
+    // Obtener la información de la categoría
+    $categoria = null;
+    if ($id_categoria) {
+        $sql_categoria = "SELECT c.nombre as categoria, c.codigo as codigo_categoria, c.ubicacion 
+                         FROM categorias c 
+                         WHERE c.id = ?";
+        $stmt_categoria = $conexion->prepare($sql_categoria);
+        $stmt_categoria->bind_param("i", $id_categoria);
+        $stmt_categoria->execute();
+        $result_categoria = $stmt_categoria->get_result();
+        $categoria = $result_categoria->fetch_assoc();
+    }
+
     echo json_encode([
         'success' => true,
         'message' => 'Producto agregado exitosamente',
@@ -98,7 +112,11 @@ try {
         'nombre' => $nombre,
         'precio' => $precio,
         'stock' => $stock,
-        'foto' => $foto
+        'foto' => $foto,
+        'id_categoria' => $id_categoria,
+        'categoria' => $categoria ? $categoria['categoria'] : null,
+        'codigo_categoria' => $categoria ? $categoria['codigo_categoria'] : null,
+        'ubicacion' => $categoria ? $categoria['ubicacion'] : null
     ]);
 
 } catch (Exception $e) {
