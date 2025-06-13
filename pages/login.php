@@ -3,23 +3,14 @@ require_once __DIR__ . '/../conexion.php';
 session_start();
 
 // Si ya está logueado, redirigir al index
-// if (isset($_SESSION['usuario'])) {
-//     header("Location: index.php");
-//     exit();
-// }
+if (isset($_SESSION['usuario'])) {
+    header("Location: /inventarioNj/index.php");
+    exit();
+}
 
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Temporalmente simplificado para desarrollo
-    // $_SESSION['usuario'] = $_POST['usuario'];
-    // $_SESSION['id'] = 1; // ID temporal
-    // header("Location: index.php");
-    // exit();
-
-
-
-
     $usuario = $_POST['usuario'];
     $password = $_POST['password'];
 
@@ -29,24 +20,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $resultado = $stmt->get_result();
 
     if ($resultado->num_rows === 1) {
-        header("Location: index.php");
-        // echo json_encode($resultado->fetch_assoc());
-        // $usuario = $resultado->fetch_assoc();
-        // if (password_verify($password, $usuario['password'])) {
-        //      $_SESSION['usuario'] = $usuario['usuario'];
-        //     $_SESSION['id'] = $usuario['id'];
-        //     header("Location: index.php");
-        //     exit();
-        //  } else {
-        //      $error = 'Contraseña incorrecta';
-        //  }
+        $usuario = $resultado->fetch_assoc();
+        if ($password === $usuario['contrasena']) {
+            $_SESSION['usuario'] = $usuario['usuario'];
+            $_SESSION['id'] = $usuario['id'];
+            header("Location: /inventarioNj/index.php");
+            exit();
+        } else {
+            $error = 'Contraseña incorrecta';
+        }
     } else {
         $error = 'Usuario no encontrado';
     }
-
-    // $stmt->close();
-    // $conexion->close();
-
 }
 ?>
 <!DOCTYPE html>
@@ -94,12 +79,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .login-derecha {
             width: 50%;
             background-color: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
         }
 
         .login-derecha img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
         }
 
         h2 {
@@ -147,7 +136,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         button:hover {
-            background-color: #E1B8E2;
+            background-color: #d4a7d5;
         }
 
         .mensaje {
@@ -217,13 +206,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <button type="submit">Iniciar Sesión</button>
 
                 <div class="registro-link">
-                    <p>¿No tienes cuenta? <a href="registro.php">Regístrate aquí</a></p>
+                    <p>¿No tienes cuenta? <a href="/inventarioNj/pages/registro.php">Regístrate aquí</a></p>
                 </div>
             </form>
         </div>
 
         <div class="login-derecha">
-            <img src="img/a4d39b091304ae0506884d1659f095be038dd115.png" alt="Imagen de login">
+            <img src="/inventarioNj/img/loginimg.png" alt="Logo de la empresa">
         </div>
     </div>
 </body>
