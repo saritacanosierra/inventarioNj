@@ -11,6 +11,9 @@
             <li><a href="/inventarioNj/pages/listar_categorias.php">Categorías</a></li>
             <li><a href="/inventarioNj/pages/financiero.php">Financiero</a></li>
             <li><a href="/inventarioNj/pages/ventas.php">Ventas</a></li>
+            <li><a href="/inventarioNj/pages/envios.php">Envios</a></li>
+            
+            
             <li>
                 <div class="user-menu">
                     <button class="user-btn" onclick="toggleDropdown()">

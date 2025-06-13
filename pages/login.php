@@ -1,5 +1,5 @@
 <?php
-require_once 'conexion.php';
+require_once __DIR__ . '/../conexion.php';
 session_start();
 
 // Si ya está logueado, redirigir al index

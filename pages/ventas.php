@@ -2,10 +2,10 @@
 require '../conexion.php';
 
 $sql = "SELECT v.*, p.nombre as nombre_producto, p.codigo as codigo_producto, 
-        DATE_FORMAT(v.fecha_venta, '%Y-%m-%d %H:%i:%s') as fecha_venta,
-        p.stock as stock_actual
+        c.cedula as cedula_cliente
         FROM ventas v 
         JOIN productos p ON v.id_producto = p.id 
+        LEFT JOIN clientes c ON v.id_cliente = c.id 
         ORDER BY v.fecha_venta DESC";
 $resultado = $conexion->query($sql);
 
@@ -175,14 +175,9 @@ if (!$resultado) {
             transform: scale(1.1);
         }
 
-        .btn-editar .material-icons {
-            color: #2196F3;
-        }
+        
 
-        .btn-eliminar .material-icons {
-            color: #f44336;
-        }
-
+        
         /* Estilos para el select de productos */
         select#id_producto,
         select#edit_id_producto {
@@ -383,11 +378,388 @@ if (!$resultado) {
         }
 
         .btn-factura .material-icons {
-            color: #4CAF50;
+            color: white;
         }
 
         .btn-factura:hover .material-icons {
-            color: #388E3C;
+            color: white;
+        }
+
+        .btn-guia {
+            background-color: #28a745;
+            color: white;
+            padding: 4px 8px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 5px;
+        }
+
+        .btn-guia:hover {
+            background-color: #218838;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: #fff;
+            margin: 0 auto;
+            padding: 10px;
+            border: 1px solid #ddd;
+            width: 6.5in;
+            border-radius: 8px;
+            position: relative;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .guia-contenido {
+            padding: 5px;
+            background: white;
+            border-radius: 8px;
+            max-width: 6.5in;
+            margin: 0 auto;
+        }
+
+        .guia-header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .guia-logo {
+            text-align: center;
+        }
+
+        .guia-logo img {
+            max-width: 120px;
+            height: auto;
+        }
+
+        .guia-titulo {
+            text-align: left;
+        }
+
+        .guia-titulo h1 {
+            color: #333;
+            font-size: 22px;
+            margin-bottom: 8px;
+        }
+
+        .guia-titulo p {
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .guia-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .guia-emisor, .guia-receptor {
+            width: 48%;
+        }
+
+        .guia-emisor h3, .guia-receptor h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .guia-emisor p, .guia-receptor p {
+            margin: 4px 0;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .guia-delicado {
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #ffd6e7;
+            border: 2px dashed #ff69b4;
+            border-radius: 4px;
+        }
+
+        .guia-delicado h2 {
+            color: #ff1493;
+            font-size: 36px;
+            font-weight: bold;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .guia-agradecimiento {
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        .guia-agradecimiento p {
+            font-size: 14px;
+            color: #333;
+            margin: 0;
+            font-style: italic;
+        }
+
+        .guia-footer {
+            margin-top: 20px;
+            text-align: center;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+        }
+
+        .btn-imprimir {
+            background-color: #17a2b8;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-imprimir:hover {
+            background-color: #138496;
+        }
+
+        .material-icons {
+            font-size: 18px;
+        }
+
+        @media print {
+            .modal-content {
+                width: 6.5in;
+                margin: 0;
+                padding: 0.1in;
+                box-shadow: none;
+                border: none;
+            }
+
+            .guia-contenido {
+                padding: 0;
+            }
+
+            .guia-delicado {
+                background-color: #ffd6e7 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+            .guia-agradecimiento {
+                background-color: #f8f9fa !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .btn-imprimir {
+                display: none;
+            }
+        }
+
+        .sin-cliente {
+            color: #dc3545;
+            font-style: italic;
+            font-size: 0.9em;
+        }
+
+        /* Estilos para el header de la tabla */
+        .tabla-contenedor {
+            max-height: 70vh;
+            overflow-y: auto;
+            margin-top: 20px;
+            border: 1px solid #E1B8E2;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .tabla-contenedor table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+        }
+
+        .tabla-contenedor th {
+            position: sticky;
+            top: 0;
+            background-color: #E1B8E2;
+            color: white;
+            font-weight: 600;
+            padding: 15px;
+            text-align: left;
+            border-bottom: 2px solid #d4a7d5;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            z-index: 1;
+        }
+
+        .tabla-contenedor td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .tabla-contenedor tr:hover {
+            background-color: #f8f5f9;
+        }
+
+        .tabla-contenedor::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .tabla-contenedor::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .tabla-contenedor::-webkit-scrollbar-thumb {
+            background: #E1B8E2;
+            border-radius: 4px;
+        }
+
+        .tabla-contenedor::-webkit-scrollbar-thumb:hover {
+            background: #d4a7d5;
+        }
+
+        /* Estilos para los botones de acción */
+        .acciones {
+            display: flex;
+            gap: 5px;
+            justify-content: flex-start;
+            align-items: center;
+        }
+
+        .btn-editar, .btn-guia, .btn-eliminar, .btn-factura {
+            padding: 6px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .btn-editar {
+            background-color: #17a2b8;
+           
+        }
+
+        .btn-guia {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .btn-eliminar {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .btn-factura {
+            background-color:rgb(224, 147, 190);
+            color: white;
+        }
+
+        .btn-editar:hover {
+            background-color: #138496;
+        }
+
+        .btn-guia:hover {
+            background-color: #218838;
+        }
+
+        .btn-eliminar:hover {
+            background-color: #c82333;
+        }
+
+        .btn-factura:hover {
+            background-color: #5a6268;
+            color: white;
+        }
+
+        .material-icons {
+            font-size: 18px;
+        }
+
+        /* Estilos para el contenedor principal */
+        .contenido {
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin: 20px;
+        }
+
+        .contenido h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        /* Estilos para el filtro y botón de agregar */
+        .filtro-agregar-contenedor {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .filtro-input {
+            padding: 8px 12px;
+            border: 1px solid #E1B8E2;
+            border-radius: 4px;
+            width: 300px;
+            font-size: 14px;
+        }
+
+        .filtro-input:focus {
+            outline: none;
+            border-color: #d4a7d5;
+            box-shadow: 0 0 0 2px rgba(225, 184, 226, 0.2);
+        }
+
+        .btn-agregar {
+            background-color: #E1B8E2;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            width: 40px;
+            height: 40px;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .btn-agregar:hover {
+            background-color: #d4a7d5;
         }
     </style>
 </head>
@@ -417,54 +789,50 @@ if (!$resultado) {
                         <tr>
                             <th>ID</th>
                             <th>Fecha</th>
-                            <th>Código Producto</th>
+                            <th>Cédula Cliente</th>
+                            <th>Código</th>
                             <th>Producto</th>
-                            <th>Stock</th>
-                            <th>Precio Unitario</th>
+                            <th>Cantidad</th>
+                            <th>Precio Unit.</th>
                             <th>Total</th>
-                            <th>Tipo de Pago</th>
+                            <th>Tipo Pago</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="tabla-ventas">
-                        <?php while ($venta = $resultado->fetch_assoc()): ?>
-                            <tr>
-                                <td><?php echo $venta['id']; ?></td>
-                                <td><?php 
-                                    $fecha = new DateTime($venta['fecha_venta']);
-                                    echo $fecha->format('d/n/Y H:i');
-                                ?></td>
-                                <td><?php echo $venta['codigo_producto']; ?></td>
-                                <td>
-                                    <?php 
-                                    echo $venta['nombre_producto'];
-                                    if ($venta['stock_actual'] == 1) {
-                                        echo ' <span class="stock-bajo">(Última unidad disponible)</span>';
-                                    }
-                                    ?>
-                                </td>
-                                <td><?php echo $venta['cantidad']; ?></td>
-                                <td>$<?php echo number_format($venta['precio_unitario'], 2); ?></td>
-                                <td>$<?php echo number_format($venta['total'], 2); ?></td>
-                                <td>
-                                    <?php 
-                                    $tipo_pago = $venta['tipo_pago'] ?? 'No especificado';
-                                    echo ucfirst($tipo_pago);
-                                    ?>
-                                </td>
-                                <td class="acciones">
-                                    <button onclick="abrirModalEditar(<?php echo htmlspecialchars(json_encode($venta)); ?>)" class="btn-editar">
-                                        <span class="material-icons">edit</span>
-                                    </button>
-                                    <a href="../controllers/eliminar_venta.php?id=<?php echo $venta['id']; ?>" class="btn-eliminar" onclick="return confirm('¿Estás seguro de eliminar esta venta?')">
-                                        <span class="material-icons">delete</span>
-                                    </a>
-                                    <a href="../controllers/generar_factura.php?id=<?php echo $venta['id']; ?>" class="btn-factura" target="_blank">
-                                        <span class="material-icons">receipt</span>
-                                    </a>
-                                </td>
-                            </tr>
-                        <?php endwhile; ?>
+                        <?php
+                        if ($resultado->num_rows > 0) {
+                            while($venta = $resultado->fetch_assoc()) {
+                                echo "<tr>";
+                                echo "<td>" . $venta['id'] . "</td>";
+                                echo "<td>" . $venta['fecha_venta'] . "</td>";
+                                echo "<td>" . ($venta['cedula_cliente'] ? htmlspecialchars($venta['cedula_cliente']) : '<span class="sin-cliente">Sin cliente</span>') . "</td>";
+                                echo "<td>" . htmlspecialchars($venta['codigo_producto']) . "</td>";
+                                echo "<td>" . htmlspecialchars($venta['nombre_producto']) . "</td>";
+                                echo "<td>" . $venta['cantidad'] . "</td>";
+                                echo "<td>$" . number_format($venta['precio_unitario'], 2) . "</td>";
+                                echo "<td>$" . number_format($venta['total'], 2) . "</td>";
+                                echo "<td>" . htmlspecialchars($venta['tipo_pago']) . "</td>";
+                                echo "<td class='acciones'>";
+                                echo "<button onclick='abrirModalEditar(" . $venta['id'] . ")' class='btn-editar'>";
+                                echo "<span class='material-icons'>edit</span>";
+                                echo "</button>";
+                                echo "<a href='envios.php?id_venta=" . $venta['id'] . "' class='btn-guia'>";
+                                echo "<span class='material-icons'>local_shipping</span>";
+                                echo "</a>";
+                                echo "<a href='../controllers/eliminar_venta.php?id=" . $venta['id'] . "' class='btn-eliminar' onclick='return confirm(\"¿Estás seguro de eliminar esta venta?\")'>";
+                                echo "<span class='material-icons'>delete</span>";
+                                echo "</a>";
+                                echo "<a href='../controllers/generar_factura.php?id=" . $venta['id'] . "' class='btn-factura' target='_blank'>";
+                                echo "<span class='material-icons'>receipt</span>";
+                                echo "</a>";
+                                echo "</td>";
+                                echo "</tr>";
+                            }
+                        } else {
+                            echo "<tr><td colspan='10' class='text-center'>No hay ventas registradas</td></tr>";
+                        }
+                        ?>
                     </tbody>
                 </table>
             </div>
@@ -646,6 +1014,86 @@ if (!$resultado) {
         </div>
     </div>
 
+    <!-- Modal para guía de envíos -->
+    <div id="modalGuia" class="modal">
+        <div class="modal-content" style="width: 6.5in;">
+            <span class="close" onclick="cerrarModalGuia()">&times;</span>
+            <div class="guia-contenido">
+                <div class="guia-header">
+                    <div class="guia-logo">
+                        <img src="/inventarioNj/img/logo (40).png" alt="Ropa Nunca Jamás">
+                    </div>
+                    <div class="guia-titulo">
+                        <h1>GUÍA DE ENVÍO</h1>
+                        <p>Fecha: <span id="fecha-guia"></span></p>
+                    </div>
+                </div>
+                
+                <div class="guia-info">
+                    <div class="guia-emisor">
+                        <h3>DATOS DEL REMITENTE</h3>
+                        <p><strong>Empresa:</strong> Ropa Nunca Jamás</p>
+                        <p><strong>Dirección:</strong> Cl. 48 #49-41, La Candelaria, Medellín, La Candelaria, Medellín, Antioquia</p>
+                        <p><strong>Teléfono:</strong> 301 691 75 71</p>
+                    </div>
+                    
+                    <div class="guia-receptor">
+                        <h3>DATOS DEL DESTINATARIO</h3>
+                        <p><strong>Nombre:</strong> <span id="guia-nombre"></span></p>
+                        <p><strong>Dirección:</strong> <span id="guia-direccion"></span></p>
+                        <p><strong>Teléfono:</strong> <span id="guia-celular"></span></p>
+                        <p><strong>Cédula:</strong> <span id="guia-cedula"></span></p>
+                    </div>
+                </div>
+
+                <div class="guia-delicado">
+                    <h2>DELICADO</h2>
+                </div>
+
+                <div class="guia-agradecimiento">
+                    <p>¡Gracias por tu compra! Tu satisfacción es nuestra prioridad.</p>
+                </div>
+
+                <div class="guia-footer">
+                    <button onclick="imprimirGuia()" class="btn-imprimir">
+                        <span class="material-icons">print</span> Imprimir Guía
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para insertar cliente -->
+    <div id="modalInsertarCliente" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="cerrarModalInsertarCliente()">&times;</span>
+            <h2>Insertar Nuevo Cliente</h2>
+            <div id="mensaje-error-insertar-cliente" class="mensaje error" style="display: none;"></div>
+            <form id="formInsertarCliente" class="form-insertar" method="POST" action="../controllers/insertar_cliente.php">
+                <div class="form-group">
+                    <label for="nombre">Nombre:</label>
+                    <input type="text" id="nombre" name="nombre" required>
+                </div>
+                <div class="form-group">
+                    <label for="cedula">Cédula:</label>
+                    <input type="text" id="cedula" name="cedula" required>
+                </div>
+                <div class="form-group">
+                    <label for="celular">Celular:</label>
+                    <input type="text" id="celular" name="celular" required>
+                </div>
+                <div class="form-group">
+                    <label for="direccion">Dirección:</label>
+                    <input type="text" id="direccion" name="direccion" required>
+                </div>
+                <div class="form-buttons">
+                    <button type="submit" class="btn-guardar">Guardar</button>
+                    <button type="button" class="btn-cancelar" onclick="cerrarModalInsertarCliente()">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         // Funciones para el modal de insertar
         function abrirModalInsertar() {
@@ -754,6 +1202,7 @@ if (!$resultado) {
                     minute: '2-digit',
                     hour12: false
                 })}</td>
+                <td>${nuevaVenta.cedula_cliente ? htmlspecialchars($nuevaVenta.cedula_cliente) : '<span class="sin-cliente">Sin cliente</span>'}</td>
                 <td>${nuevaVenta.codigo_producto}</td>
                 <td>${productoCell}</td>
                 <td>${nuevaVenta.cantidad}</td>
@@ -791,7 +1240,7 @@ if (!$resultado) {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    actualizarTablaVentas(data);
+                    actualizarTablaVentas(data.venta);
                     cerrarModalInsertar();
                     alert('Venta registrada exitosamente');
                     location.reload(); // Recargar para actualizar el stock en los selectores
@@ -852,6 +1301,7 @@ if (!$resultado) {
                                 minute: '2-digit',
                                 hour12: false
                             })}</td>
+                            <td>${data.cedula_cliente ? htmlspecialchars($data.cedula_cliente) : '<span class="sin-cliente">Sin cliente</span>'}</td>
                             <td>${data.codigo_producto}</td>
                             <td>${data.nombre_producto}</td>
                             <td>${data.cantidad}</td>
@@ -979,6 +1429,221 @@ if (!$resultado) {
             }
             // ... existing modal close code ...
         }
+
+        function abrirModalGuia(idCliente) {
+            if (!idCliente) {
+                // Si no hay ID de cliente, redirigir a la vista de envíos
+                window.location.href = 'envios.php';
+                return;
+            }
+
+            // Si hay ID de cliente, continuar con la lógica existente
+            fetch(`../controllers/obtener_cliente.php?id=${idCliente}`)
+                .then(response => response.json())
+                .then(cliente => {
+                    document.getElementById('fecha-guia').textContent = new Date().toLocaleDateString();
+                    document.getElementById('guia-nombre').textContent = cliente.nombre;
+                    document.getElementById('guia-direccion').textContent = cliente.direccion;
+                    document.getElementById('guia-celular').textContent = cliente.celular;
+                    document.getElementById('guia-cedula').textContent = cliente.cedula;
+                    document.getElementById('modalGuia').style.display = 'block';
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error al obtener los datos del cliente');
+                });
+        }
+
+        function cerrarModalGuia() {
+            document.getElementById('modalGuia').style.display = 'none';
+        }
+
+        function imprimirGuia() {
+            const contenido = document.querySelector('.guia-contenido').innerHTML;
+            const ventana = window.open('', 'PRINT', 'height=8.5in,width=6.5in');
+            
+            ventana.document.write('<html><head><title>Guía de Envío</title>');
+            ventana.document.write('<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">');
+            ventana.document.write('<style>');
+            ventana.document.write(`
+                @page {
+                    size: 6.5in 8.5in;
+                    margin: 0.1in 0.15in 0.15in 0.15in;
+                }
+                body {
+                    font-family: Arial, sans-serif;
+                    margin: 0;
+                    padding: 0;
+                }
+                .guia-contenido {
+                    padding: 0;
+                    max-width: 6.5in;
+                }
+                .guia-header {
+                    text-align: center;
+                    margin-bottom: 20px;
+                    border-bottom: 1px solid #eee;
+                    padding-bottom: 15px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 20px;
+                }
+                .guia-logo {
+                    text-align: center;
+                }
+                .guia-logo img {
+                    max-width: 120px;
+                    height: auto;
+                }
+                .guia-titulo {
+                    text-align: left;
+                }
+                .guia-titulo h1 {
+                    font-size: 22px;
+                    margin-bottom: 8px;
+                }
+                .guia-titulo p {
+                    font-size: 14px;
+                    margin: 0;
+                }
+                .guia-info {
+                    display: flex;
+                    justify-content: space-between;
+                    margin-bottom: 20px;
+                    font-size: 14px;
+                }
+                .guia-emisor, .guia-receptor {
+                    width: 48%;
+                }
+                .guia-emisor h3, .guia-receptor h3 {
+                    font-size: 16px;
+                    margin-bottom: 10px;
+                }
+                .guia-emisor p, .guia-receptor p {
+                    margin: 4px 0;
+                    font-size: 14px;
+                }
+                .guia-delicado {
+                    text-align: center;
+                    margin: 20px 0;
+                    padding: 15px;
+                    background-color: #ffd6e7;
+                    border: 2px dashed #ff69b4;
+                }
+                .guia-delicado h2 {
+                    font-size: 36px;
+                    margin: 0;
+                    color: #ff1493;
+                    text-transform: uppercase;
+                    letter-spacing: 2px;
+                    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+                }
+                .guia-agradecimiento {
+                    text-align: center;
+                    margin: 20px 0;
+                    padding: 15px;
+                    background-color: #f8f9fa;
+                }
+                .guia-agradecimiento p {
+                    font-size: 14px;
+                    margin: 0;
+                    font-style: italic;
+                }
+                .guia-footer {
+                    text-align: center;
+                    margin-top: 20px;
+                    border-top: 1px solid #eee;
+                    padding-top: 15px;
+                }
+                .btn-imprimir {
+                    background-color: #17a2b8;
+                    color: white;
+                    padding: 8px 16px;
+                    border: none;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-size: 14px;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 6px;
+                }
+                .btn-imprimir:hover {
+                    background-color: #138496;
+                }
+                .material-icons {
+                    font-size: 18px;
+                }
+                @media print {
+                    .guia-delicado {
+                        background-color: #ffd6e7 !important;
+                        -webkit-print-color-adjust: exact;
+                        print-color-adjust: exact;
+                    }
+                    .guia-agradecimiento {
+                        background-color: #f8f9fa !important;
+                        -webkit-print-color-adjust: exact;
+                        print-color-adjust: exact;
+                    }
+                    .btn-imprimir {
+                        display: none;
+                    }
+                }
+            `);
+            ventana.document.write('</style></head><body>');
+            ventana.document.write(contenido);
+            ventana.document.write('</body></html>');
+            
+            ventana.document.close();
+            ventana.focus();
+            
+            setTimeout(() => {
+                ventana.print();
+                ventana.close();
+            }, 250);
+        }
+
+        // Funciones para el modal de insertar cliente
+        function abrirModalInsertarCliente() {
+            document.getElementById('modalInsertarCliente').style.display = 'block';
+            document.getElementById('mensaje-error-insertar-cliente').style.display = 'none';
+        }
+
+        function cerrarModalInsertarCliente() {
+            document.getElementById('modalInsertarCliente').style.display = 'none';
+            document.getElementById('formInsertarCliente').reset();
+            document.getElementById('mensaje-error-insertar-cliente').style.display = 'none';
+        }
+
+        // Manejar el envío del formulario de insertar cliente
+        document.getElementById('formInsertarCliente').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const mensajeError = document.getElementById('mensaje-error-insertar-cliente');
+            mensajeError.style.display = 'none';
+            
+            fetch('../controllers/insertar_cliente.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    cerrarModalInsertarCliente();
+                    alert('Cliente agregado exitosamente');
+                    // Aquí podrías actualizar la lista de clientes si es necesario
+                } else {
+                    mensajeError.textContent = data.message;
+                    mensajeError.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                mensajeError.textContent = 'Error al procesar la solicitud. Por favor, intente nuevamente.';
+                mensajeError.style.display = 'block';
+            });
+        });
     </script>
 </body>
 </html>

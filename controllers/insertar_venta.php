@@ -1,91 +1,96 @@
 <?php
 require_once '../conexion.php';
 
-header('Content-Type: application/json');
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $fecha_venta = $_POST['fecha_venta'];
-    $id_producto = $_POST['id_producto'];
-    $cantidad = $_POST['cantidad'];
-    $precio_unitario = $_POST['precio_unitario'];
-    $total = $_POST['total'];
-    $tipo_pago = $_POST['tipo_pago'];
-
-    try {
-        // Iniciar transacción
-        $conexion->begin_transaction();
-
-        // Verificar el stock actual
-        $sql_stock = "SELECT stock, precio FROM productos WHERE id = ?";
-        $stmt_stock = $conexion->prepare($sql_stock);
-        $stmt_stock->bind_param("i", $id_producto);
-        $stmt_stock->execute();
-        $resultado_stock = $stmt_stock->get_result();
-        $producto = $resultado_stock->fetch_assoc();
-
-        if ($producto['stock'] < $cantidad) {
-            throw new Exception("No hay suficiente stock disponible");
-        }
-
-        // Insertar la venta
-        $sql = "INSERT INTO ventas (fecha_venta, id_producto, cantidad, precio_unitario, total, tipo_pago) 
-                VALUES (?, ?, ?, ?, ?, ?)";
-        $stmt = $conexion->prepare($sql);
-        $stmt->bind_param("siidds", $fecha_venta, $id_producto, $cantidad, $precio_unitario, $total, $tipo_pago);
-        $stmt->execute();
-
-        // Actualizar el stock
-        $nuevo_stock = $producto['stock'] - $cantidad;
-        $sql_update = "UPDATE productos SET stock = ? WHERE id = ?";
-        $stmt_update = $conexion->prepare($sql_update);
-        $stmt_update->bind_param("ii", $nuevo_stock, $id_producto);
-        $stmt_update->execute();
-
-        // Obtener información del producto para la respuesta
-        $sql_producto = "SELECT p.*, c.nombre as categoria 
-                        FROM productos p 
-                        LEFT JOIN categoria c ON p.id_categoria = c.id 
-                        WHERE p.id = ?";
-        $stmt_producto = $conexion->prepare($sql_producto);
-        $stmt_producto->bind_param("i", $id_producto);
-        $stmt_producto->execute();
-        $producto_info = $stmt_producto->get_result()->fetch_assoc();
-
-        // Confirmar transacción
-        $conexion->commit();
-
-        // Preparar la respuesta
-        $respuesta = [
-            'success' => true,
-            'id' => $conexion->insert_id,
-            'fecha_venta' => $fecha_venta,
-            'id_producto' => $id_producto,
-            'codigo_producto' => $producto_info['codigo'],
-            'nombre_producto' => $producto_info['nombre'],
-            'cantidad' => $cantidad,
-            'precio_unitario' => $precio_unitario,
-            'total' => $total,
-            'stock_actual' => $nuevo_stock,
-            'tipo_pago' => $tipo_pago
-        ];
-
-        echo json_encode($respuesta);
-
-    } catch (Exception $e) {
-        // Revertir transacción en caso de error
-        $conexion->rollback();
-        
-        echo json_encode([
-            'success' => false,
-            'message' => 'Error al registrar la venta: ' . $e->getMessage()
-        ]);
-    }
-} else {
-    echo json_encode([
-        'success' => false,
-        'message' => 'Método no permitido'
-    ]);
+// Verificar si la solicitud es POST
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    echo json_encode(['success' => false, 'message' => 'Método no permitido']);
+    exit;
 }
 
+try {
+    // Obtener y validar los datos
+    $fecha_venta = $_POST['fecha_venta'] ?? null;
+    $id_producto = $_POST['id_producto'] ?? null;
+    $cantidad = $_POST['cantidad'] ?? null;
+    $precio_unitario = $_POST['precio_unitario'] ?? null;
+    $total = $_POST['total'] ?? null;
+    $tipo_pago = $_POST['tipo_pago'] ?? null;
+    $id_cliente = $_POST['id_cliente'] ?? null;
+
+    if (!$fecha_venta || !$id_producto || !$cantidad || !$precio_unitario || !$total || !$tipo_pago) {
+        echo json_encode(['success' => false, 'message' => 'Faltan datos requeridos']);
+        exit;
+    }
+
+    // Iniciar transacción
+    $conexion->begin_transaction();
+
+    // Insertar la venta
+    $sql = "INSERT INTO ventas (fecha_venta, id_producto, cantidad, precio_unitario, total, tipo_pago, id_cliente) 
+            VALUES (?, ?, ?, ?, ?, ?, ?)";
+    $stmt = $conexion->prepare($sql);
+    $stmt->bind_param("siiddsi", $fecha_venta, $id_producto, $cantidad, $precio_unitario, $total, $tipo_pago, $id_cliente);
+    
+    if (!$stmt->execute()) {
+        throw new Exception("Error al insertar la venta: " . $stmt->error);
+    }
+
+    $id_venta = $conexion->insert_id;
+
+    // Actualizar el stock del producto
+    $sql_stock = "UPDATE productos SET stock = stock - ? WHERE id = ?";
+    $stmt_stock = $conexion->prepare($sql_stock);
+    $stmt_stock->bind_param("ii", $cantidad, $id_producto);
+    
+    if (!$stmt_stock->execute()) {
+        throw new Exception("Error al actualizar el stock: " . $stmt_stock->error);
+    }
+
+    // Obtener los datos de la venta insertada para la respuesta
+    $sql_venta = "SELECT v.*, p.nombre as nombre_producto, p.codigo as codigo_producto, p.stock as stock_actual,
+                         c.nombre as nombre_cliente
+                  FROM ventas v
+                  JOIN productos p ON v.id_producto = p.id
+                  LEFT JOIN clientes c ON v.id_cliente = c.id
+                  WHERE v.id = ?";
+    $stmt_venta = $conexion->prepare($sql_venta);
+    $stmt_venta->bind_param("i", $id_venta);
+    $stmt_venta->execute();
+    $resultado = $stmt_venta->get_result();
+    $venta = $resultado->fetch_assoc();
+
+    // Confirmar la transacción
+    $conexion->commit();
+
+    // Preparar la respuesta
+    $respuesta = [
+        'success' => true,
+        'message' => 'Venta registrada exitosamente',
+        'venta' => [
+            'id' => $venta['id'],
+            'fecha_venta' => $venta['fecha_venta'],
+            'codigo_producto' => $venta['codigo_producto'],
+            'nombre_producto' => $venta['nombre_producto'],
+            'cantidad' => $venta['cantidad'],
+            'precio_unitario' => $venta['precio_unitario'],
+            'total' => $venta['total'],
+            'tipo_pago' => $venta['tipo_pago'],
+            'stock_actual' => $venta['stock_actual'],
+            'nombre_cliente' => $venta['nombre_cliente']
+        ]
+    ];
+
+    echo json_encode($respuesta);
+
+} catch (Exception $e) {
+    // Revertir la transacción en caso de error
+    $conexion->rollback();
+    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+}
+
+// Cerrar las conexiones
+if (isset($stmt)) $stmt->close();
+if (isset($stmt_stock)) $stmt_stock->close();
+if (isset($stmt_venta)) $stmt_venta->close();
 $conexion->close();
 ?> 

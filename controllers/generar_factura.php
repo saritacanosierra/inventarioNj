@@ -11,9 +11,11 @@ if ($id_venta <= 0) {
 try {
     // Obtener información de la venta
     $sql = "SELECT v.*, p.nombre as nombre_producto, p.codigo as codigo_producto,
-            DATE_FORMAT(v.fecha_venta, '%d/%m/%Y %H:%i') as fecha_venta_formateada
+            DATE_FORMAT(v.fecha_venta, '%d/%m/%Y %H:%i') as fecha_venta_formateada,
+            c.nombre as nombre_cliente, c.cedula as cedula_cliente, c.direccion as direccion_cliente
             FROM ventas v
             JOIN productos p ON v.id_producto = p.id
+            LEFT JOIN clientes c ON v.id_cliente = c.id
             WHERE v.id = ?";
     
     $stmt = $conexion->prepare($sql);
@@ -119,6 +121,25 @@ try {
         .tipo-pago strong {
             color: #333;
         }
+        .btn-imprimir {
+            background-color: #17a2b8;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 20px;
+        }
+        .btn-imprimir:hover {
+            background-color: #138496;
+        }
+        .material-icons {
+            font-size: 18px;
+        }
         @media print {
             body {
                 background-color: white;
@@ -128,6 +149,28 @@ try {
                 box-shadow: none;
                 padding: 20px;
             }
+            .btn-imprimir {
+                display: none;
+            }
+        }
+        .cliente-info {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            border-left: 4px solid #E1B8E2;
+        }
+
+        .cliente-info h3 {
+            color: #333;
+            margin: 0 0 10px 0;
+            font-size: 16px;
+        }
+
+        .cliente-info p {
+            margin: 5px 0;
+            color: #666;
+            font-size: 14px;
         }
     </style>
 </head>
@@ -144,6 +187,15 @@ try {
                 <p>Factura #: <?php echo $venta['id']; ?></p>
             </div>
         </div>
+
+        <?php if ($venta['nombre_cliente']): ?>
+        <div class="cliente-info">
+            <h3>Datos del Cliente</h3>
+            <p><strong>Nombre:</strong> <?php echo htmlspecialchars($venta['nombre_cliente']); ?></p>
+            <p><strong>Cédula:</strong> <?php echo htmlspecialchars($venta['cedula_cliente']); ?></p>
+            <p><strong>Dirección:</strong> <?php echo htmlspecialchars($venta['direccion_cliente']); ?></p>
+        </div>
+        <?php endif; ?>
 
         <div class="detalles">
             <h2>Detalles de la Venta</h2>
@@ -175,7 +227,20 @@ try {
             <p>Gracias por su compra</p>
             <p>Este documento es una factura válida</p>
         </div>
+
+        <div style="text-align: center; margin-top: 20px;">
+            <button onclick="window.print()" class="btn-imprimir">
+                <span class="material-icons">print</span> Imprimir Factura
+            </button>
+        </div>
     </div>
+
+    <script>
+        // Función para imprimir la factura
+        function imprimirFactura() {
+            window.print();
+        }
+    </script>
 </body>
 </html>
 <?php
