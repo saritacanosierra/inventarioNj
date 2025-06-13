@@ -9,22 +9,42 @@ if ($id_venta <= 0) {
 }
 
 try {
-    // Obtener información de la venta
-    $sql = "SELECT v.*, p.nombre as nombre_producto, p.codigo as codigo_producto,
-            DATE_FORMAT(v.fecha_venta, '%d/%m/%Y %H:%i') as fecha_venta_formateada,
-            c.nombre as nombre_cliente, c.cedula as cedula_cliente, c.direccion as direccion_cliente
-            FROM ventas v
-            JOIN productos p ON v.id_producto = p.id
-            LEFT JOIN clientes c ON v.id_cliente = c.id
-            WHERE v.id = ?";
+    // Obtener información de la venta principal
+    $sql_venta = "SELECT v.*, 
+                   DATE_FORMAT(v.fecha_venta, '%d/%m/%Y %H:%i') as fecha_venta_formateada,
+                   c.nombre as nombre_cliente, c.cedula as cedula_cliente, c.direccion as direccion_cliente
+                   FROM ventas v
+                   LEFT JOIN clientes c ON v.id_cliente = c.id
+                   WHERE v.id = ?";
     
-    $stmt = $conexion->prepare($sql);
-    $stmt->bind_param("i", $id_venta);
-    $stmt->execute();
-    $venta = $stmt->get_result()->fetch_assoc();
+    $stmt_venta = $conexion->prepare($sql_venta);
+    if (!$stmt_venta) {
+        throw new Exception("Error al preparar consulta de venta: " . $conexion->error);
+    }
+    $stmt_venta->bind_param("i", $id_venta);
+    $stmt_venta->execute();
+    $venta = $stmt_venta->get_result()->fetch_assoc();
 
     if (!$venta) {
         die('Venta no encontrada');
+    }
+
+    // Obtener los productos de la venta desde detalle_ventas
+    $sql_productos = "SELECT dv.*, p.nombre as nombre_producto, p.codigo as codigo_producto
+                      FROM detalle_ventas dv
+                      JOIN productos p ON dv.producto_id = p.id
+                      WHERE dv.venta_id = ?";
+    
+    $stmt_productos = $conexion->prepare($sql_productos);
+    if (!$stmt_productos) {
+        throw new Exception("Error al preparar consulta de productos: " . $conexion->error);
+    }
+    $stmt_productos->bind_param("i", $id_venta);
+    $stmt_productos->execute();
+    $productos = $stmt_productos->get_result()->fetch_all(MYSQLI_ASSOC);
+
+    if (empty($productos)) {
+        die('No se encontraron productos para esta venta');
     }
 ?>
 <!DOCTYPE html>
@@ -205,18 +225,26 @@ try {
                         <th>Código</th>
                         <th>Producto</th>
                         <th>Cantidad</th>
-                        <th>Total</th>
+                        <th>Precio Unit.</th>
+                        <th>Subtotal</th>
                     </tr>
                 </thead>
                 <tbody>
+                    <?php foreach ($productos as $producto): ?>
                     <tr>
-                        <td><?php echo $venta['codigo_producto']; ?></td>
-                        <td><?php echo $venta['nombre_producto']; ?></td>
-                        <td><?php echo $venta['cantidad']; ?></td>
-                        <td>$<?php echo number_format($venta['total'], 2); ?></td>
+                        <td><?php echo htmlspecialchars($producto['codigo_producto']); ?></td>
+                        <td><?php echo htmlspecialchars($producto['nombre_producto']); ?></td>
+                        <td><?php echo $producto['cantidad']; ?></td>
+                        <td>$<?php echo number_format($producto['precio_unitario'], 2); ?></td>
+                        <td>$<?php echo number_format($producto['subtotal'], 2); ?></td>
                     </tr>
+                    <?php endforeach; ?>
                 </tbody>
             </table>
+        </div>
+
+        <div class="total">
+            <h3>Total: $<?php echo number_format($venta['total'], 2); ?></h3>
         </div>
 
         <div class="tipo-pago">
@@ -248,5 +276,8 @@ try {
     die('Error al generar la factura: ' . $e->getMessage());
 }
 
+// Cerrar las conexiones
+if (isset($stmt_venta)) $stmt_venta->close();
+if (isset($stmt_productos)) $stmt_productos->close();
 $conexion->close();
 ?> 

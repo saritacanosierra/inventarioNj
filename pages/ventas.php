@@ -1,12 +1,16 @@
 <?php
 require '../conexion.php';
 
-$sql = "SELECT v.*, p.nombre as nombre_producto, p.codigo as codigo_producto, 
-        c.cedula as cedula_cliente
-        FROM ventas v 
-        JOIN productos p ON v.id_producto = p.id 
-        LEFT JOIN clientes c ON v.id_cliente = c.id 
-        ORDER BY v.fecha_venta DESC";
+$sql = "SELECT v.id, v.fecha_venta, v.total, v.tipo_pago, v.estado, v.created_at,
+       c.cedula as cedula_cliente, c.nombre as nombre_cliente,
+       COUNT(dv.id) as cantidad_productos,
+       GROUP_CONCAT(CONCAT(p.codigo, ' - ', p.nombre, ' (', dv.cantidad, ')') SEPARATOR ', ') as productos
+FROM ventas v 
+LEFT JOIN clientes c ON v.id_cliente = c.id 
+LEFT JOIN detalle_ventas dv ON v.id = dv.venta_id
+LEFT JOIN productos p ON dv.producto_id = p.id
+GROUP BY v.id
+ORDER BY v.fecha_venta DESC";
 $resultado = $conexion->query($sql);
 
 if (!$resultado) {
@@ -775,11 +779,15 @@ if (!$resultado) {
                     <input type="text" id="filtro-venta" placeholder="Buscar venta..." class="filtro-input">
                 </div>
                 <div class="btn-agregar-contenedor">
+                    <a href="registrar_venta.php" class="btn-ventas-mensuales" style="text-decoration: none; margin-right: 10px;">
+                        <span class="material-icons">add_shopping_cart</span>
+                        Nueva Venta Completa
+                    </a>
                     <button onclick="abrirModalVentasMensuales()" class="btn-ventas-mensuales">
                         <span class="material-icons">calendar_month</span>
                         Ventas Mensuales
                     </button>
-                    <button onclick="abrirModalInsertar()" class="btn-agregar">+</button>
+                   
                 </div>
             </div>
 
@@ -790,12 +798,8 @@ if (!$resultado) {
                             <th>ID</th>
                             <th>Fecha</th>
                             <th>Cédula Cliente</th>
-                            <th>Código</th>
-                            <th>Producto</th>
-                            <th>Cantidad</th>
-                            <th>Precio Unit.</th>
-                            <th>Total</th>
-                            <th>Tipo Pago</th>
+                            <th>Cantidad de Productos</th>
+                            <th>Productos</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
@@ -807,18 +811,13 @@ if (!$resultado) {
                                 echo "<td>" . $venta['id'] . "</td>";
                                 echo "<td>" . $venta['fecha_venta'] . "</td>";
                                 echo "<td>" . ($venta['cedula_cliente'] ? htmlspecialchars($venta['cedula_cliente']) : '<span class="sin-cliente">Sin cliente</span>') . "</td>";
-                                echo "<td>" . htmlspecialchars($venta['codigo_producto']) . "</td>";
-                                echo "<td>" . htmlspecialchars($venta['nombre_producto']) . "</td>";
-                                echo "<td>" . $venta['cantidad'] . "</td>";
-                                echo "<td>$" . number_format($venta['precio_unitario'], 2) . "</td>";
-                                echo "<td>$" . number_format($venta['total'], 2) . "</td>";
-                                echo "<td>" . htmlspecialchars($venta['tipo_pago']) . "</td>";
+                                echo "<td>" . $venta['cantidad_productos'] . " productos</td>";
+                                echo "<td>" . htmlspecialchars($venta['productos'] ?: 'Sin productos') . "</td>";
                                 echo "<td class='acciones'>";
-                                echo "<button onclick='abrirModalEditar(" . $venta['id'] . ")' class='btn-editar'>";
-                                echo "<span class='material-icons'>edit</span>";
-                                echo "</button>";
-                                echo "<a href='envios.php?id_venta=" . $venta['id'] . "' class='btn-guia'>";
-                                echo "<span class='material-icons'>local_shipping</span>";
+                              
+                            
+                                
+                    
                                 echo "</a>";
                                 echo "<a href='../controllers/eliminar_venta.php?id=" . $venta['id'] . "' class='btn-eliminar' onclick='return confirm(\"¿Estás seguro de eliminar esta venta?\")'>";
                                 echo "<span class='material-icons'>delete</span>";
@@ -1203,10 +1202,10 @@ if (!$resultado) {
                     hour12: false
                 })}</td>
                 <td>${nuevaVenta.cedula_cliente ? htmlspecialchars($nuevaVenta.cedula_cliente) : '<span class="sin-cliente">Sin cliente</span>'}</td>
-                <td>${nuevaVenta.codigo_producto}</td>
+                <td>${nuevaVenta.cantidad_productos} productos</td>
                 <td>${productoCell}</td>
-                <td>${nuevaVenta.cantidad}</td>
-                <td>$${parseFloat(nuevaVenta.precio_unitario).toFixed(2)}</td>
+                <td>-</td>
+                <td>-</td>
                 <td>$${parseFloat(nuevaVenta.total).toFixed(2)}</td>
                 <td>${nuevaVenta.tipo_pago ? nuevaVenta.tipo_pago.charAt(0).toUpperCase() + nuevaVenta.tipo_pago.slice(1) : 'No especificado'}</td>
                 <td class="acciones">
@@ -1302,10 +1301,10 @@ if (!$resultado) {
                                 hour12: false
                             })}</td>
                             <td>${data.cedula_cliente ? htmlspecialchars($data.cedula_cliente) : '<span class="sin-cliente">Sin cliente</span>'}</td>
-                            <td>${data.codigo_producto}</td>
-                            <td>${data.nombre_producto}</td>
-                            <td>${data.cantidad}</td>
-                            <td>$${parseFloat(data.precio_unitario).toFixed(2)}</td>
+                            <td>${data.cantidad_productos} productos</td>
+                            <td>${data.productos ? htmlspecialchars($data.productos) : 'Sin productos'}</td>
+                            <td>-</td>
+                            <td>-</td>
                             <td>$${parseFloat(data.total).toFixed(2)}</td>
                             <td>${data.tipo_pago ? data.tipo_pago.charAt(0).toUpperCase() + data.tipo_pago.slice(1) : 'No especificado'}</td>
                             <td class="acciones">
@@ -1405,9 +1404,9 @@ if (!$resultado) {
                                     minute: '2-digit',
                                     hour12: false
                                 })}</td>
-                                <td>${venta.nombre_producto} (${venta.codigo_producto})</td>
+                                <td>${venta.productos}</td>
                                 <td>${venta.cantidad}</td>
-                                <td>$${parseFloat(venta.precio_unitario).toFixed(2)}</td>
+                                <td>-</td>
                                 <td>$${parseFloat(venta.total).toFixed(2)}</td>
                             `;
                             tbody.appendChild(tr);
