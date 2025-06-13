@@ -15,12 +15,17 @@ if ($mes < 1 || $mes > 12) {
 }
 
 try {
-    // Obtener las ventas del mes
-    $sql = "SELECT v.*, p.nombre as nombre_producto, p.codigo as codigo_producto,
-            DATE_FORMAT(v.fecha_venta, '%Y-%m-%d %H:%i:%s') as fecha_venta
+    // Obtener las ventas del mes con detalles de productos
+    $sql = "SELECT v.id, v.fecha_venta, v.total, v.tipo_pago, v.estado,
+                   c.nombre as nombre_cliente, c.cedula as cedula_cliente,
+                   GROUP_CONCAT(CONCAT(p.codigo, ' - ', p.nombre, ' (', dv.cantidad, ')') SEPARATOR ', ') as productos,
+                   SUM(dv.cantidad) as cantidad_total
             FROM ventas v
-            JOIN productos p ON v.id_producto = p.id
+            LEFT JOIN clientes c ON v.id_cliente = c.id
+            LEFT JOIN detalle_ventas dv ON v.id = dv.venta_id
+            LEFT JOIN productos p ON dv.producto_id = p.id
             WHERE MONTH(v.fecha_venta) = ? AND YEAR(v.fecha_venta) = ?
+            GROUP BY v.id
             ORDER BY v.fecha_venta DESC";
 
     $stmt = $conexion->prepare($sql);
@@ -43,7 +48,17 @@ try {
     // Preparar la respuesta
     $ventas = [];
     while ($venta = $resultado->fetch_assoc()) {
-        $ventas[] = $venta;
+        $ventas[] = [
+            'id' => $venta['id'],
+            'fecha_venta' => $venta['fecha_venta'],
+            'total' => $venta['total'],
+            'tipo_pago' => $venta['tipo_pago'],
+            'estado' => $venta['estado'],
+            'nombre_cliente' => $venta['nombre_cliente'],
+            'cedula_cliente' => $venta['cedula_cliente'],
+            'productos' => $venta['productos'] ?: 'Sin productos',
+            'cantidad' => $venta['cantidad_total'] ?: 0
+        ];
     }
 
     echo json_encode([

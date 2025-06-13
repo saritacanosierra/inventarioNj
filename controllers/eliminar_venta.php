@@ -8,8 +8,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['id'])) {
     $conexion->begin_transaction();
 
     try {
-        // Verificar que la venta existe
-        $sql_check_venta = "SELECT id FROM ventas WHERE id = ?";
+        // Verificar que la venta existe y obtener el ID del cliente
+        $sql_check_venta = "SELECT id, id_cliente FROM ventas WHERE id = ?";
         $stmt_check = $conexion->prepare($sql_check_venta);
         $stmt_check->bind_param("i", $id);
         $stmt_check->execute();
@@ -18,6 +18,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['id'])) {
         if ($result_check->num_rows == 0) {
             throw new Exception("Venta no encontrada.");
         }
+
+        $venta = $result_check->fetch_assoc();
+        $id_cliente = $venta['id_cliente'];
 
         // Obtener todos los productos de la venta desde detalle_ventas
         $sql_detalles = "SELECT producto_id, cantidad FROM detalle_ventas WHERE venta_id = ?";
@@ -32,6 +35,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['id'])) {
             $stmt_update = $conexion->prepare($sql_update_stock);
             $stmt_update->bind_param("ii", $detalle['cantidad'], $detalle['producto_id']);
             $stmt_update->execute();
+        }
+
+        // Restar 1 del total_compras del cliente si la venta tenía un cliente asociado
+        if ($id_cliente && $id_cliente !== null) {
+            $sql_update_cliente = "UPDATE clientes SET total_compras = GREATEST(total_compras - 1, 0) WHERE id = ?";
+            $stmt_update_cliente = $conexion->prepare($sql_update_cliente);
+            $stmt_update_cliente->bind_param("i", $id_cliente);
+            $stmt_update_cliente->execute();
         }
 
         // Eliminar los detalles de la venta (se eliminarán automáticamente por CASCADE)

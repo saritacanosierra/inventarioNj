@@ -82,6 +82,20 @@ try {
 
     $id_venta = $conexion->insert_id;
 
+    // Actualizar el total_compras del cliente si se asoció un cliente
+    if ($id_cliente && $id_cliente !== '') {
+        $sql_update_cliente = "UPDATE clientes SET total_compras = total_compras + 1 WHERE id = ?";
+        $stmt_update_cliente = $conexion->prepare($sql_update_cliente);
+        if (!$stmt_update_cliente) {
+            throw new Exception("Error al preparar actualización de cliente: " . $conexion->error);
+        }
+        $stmt_update_cliente->bind_param("i", $id_cliente);
+        
+        if (!$stmt_update_cliente->execute()) {
+            throw new Exception("Error al actualizar total_compras del cliente: " . $stmt_update_cliente->error);
+        }
+    }
+
     // Insertar los detalles de la venta y actualizar stock
     foreach ($productos as $producto) {
         $id_producto = (int)$producto['id_producto'];
@@ -154,6 +168,7 @@ try {
 
 // Cerrar las conexiones
 if (isset($stmt_venta)) $stmt_venta->close();
+if (isset($stmt_update_cliente)) $stmt_update_cliente->close();
 if (isset($stmt_detalle)) $stmt_detalle->close();
 if (isset($stmt_stock)) $stmt_stock->close();
 if (isset($stmt_update_stock)) $stmt_update_stock->close();
