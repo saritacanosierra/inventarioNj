@@ -57,7 +57,7 @@ if (!$resultado) {
                                     <button onclick="abrirModalEditar(<?php echo htmlspecialchars(json_encode($categoria)); ?>)" class="btn-editar">
                                         <span class="material-icons">edit</span>
                                     </button>
-                                    <a href="../controllers/eliminar_categorias.php?id=<?php echo $categoria['id']; ?>" class="btn-eliminar" onclick="return confirm('¿Estás seguro de eliminar esta categoría?')">
+                                    <a href="../controllers/categoria/eliminar_categorias.php?id=<?php echo $categoria['id']; ?>" class="btn-eliminar" onclick="return confirm('¿Estás seguro de eliminar esta categoría?')">
                                         <span class="material-icons">delete</span>
                                     </a>
                                 </td>
@@ -290,7 +290,7 @@ if (!$resultado) {
             const mensajeError = document.getElementById('mensaje-error-insertar');
             mensajeError.style.display = 'none';
             
-            fetch('../controllers/procesar_categoria.php', {
+            fetch('../controllers/categoria/procesar_categoria.php', {
                 method: 'POST',
                 body: formData
             })
@@ -309,7 +309,7 @@ if (!$resultado) {
                             <button onclick="abrirModalEditar(${JSON.stringify(data)})" class="btn-editar">
                                 <span class="material-icons">edit</span>
                             </button>
-                            <a href="../controllers/eliminar_categorias.php?id=${data.id}" class="btn-eliminar" onclick="return confirm('¿Estás seguro de eliminar esta categoría?')">
+                            <a href="../controllers/categoria/eliminar_categorias.php?id=${data.id}" class="btn-eliminar" onclick="return confirm('¿Estás seguro de eliminar esta categoría?')">
                                 <span class="material-icons">delete</span>
                             </a>
                         </td>
@@ -338,7 +338,7 @@ if (!$resultado) {
             const mensajeError = document.getElementById('mensaje-error-editar');
             mensajeError.style.display = 'none';
             
-            fetch('../controllers/actualizar_categoria.php', {
+            fetch('../controllers/categoria/actualizar_categoria.php', {
                 method: 'POST',
                 body: formData
             })
@@ -366,7 +366,7 @@ if (!$resultado) {
                                 <button onclick="abrirModalEditar(${JSON.stringify(data)})" class="btn-editar">
                                     <span class="material-icons">edit</span>
                                 </button>
-                                <a href="../controllers/eliminar_categorias.php?id=${data.id}" class="btn-eliminar" onclick="return confirm('¿Estás seguro de eliminar esta categoría?')">
+                                <a href="../controllers/categoria/eliminar_categorias.php?id=${data.id}" class="btn-eliminar" onclick="return confirm('¿Estás seguro de eliminar esta categoría?')">
                                     <span class="material-icons">delete</span>
                                 </a>
                             </td>

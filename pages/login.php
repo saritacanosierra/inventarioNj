@@ -206,7 +206,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <button type="submit">Iniciar Sesión</button>
 
                 <div class="registro-link">
-                    <p>¿No tienes cuenta? <a href="/inventarioNj/pages/registro.php">Regístrate aquí</a></p>
+                    <p>¿No tienes cuenta? <a href="/inventarioNj/controllers/usuarios/registro.php">Regístrate aquí</a></p>
                 </div>
             </form>
         </div>

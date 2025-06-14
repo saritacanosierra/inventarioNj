@@ -819,10 +819,10 @@ if (!$resultado) {
                                 
                     
                                 echo "</a>";
-                                echo "<a href='../controllers/eliminar_venta.php?id=" . $venta['id'] . "' class='btn-eliminar' onclick='return confirm(\"¿Estás seguro de eliminar esta venta?\")'>";
+                                echo "<a href='../controllers/ventas/eliminar_venta.php?id=" . $venta['id'] . "' class='btn-eliminar' onclick='return confirm(\"¿Estás seguro de eliminar esta venta?\")'>";
                                 echo "<span class='material-icons'>delete</span>";
                                 echo "</a>";
-                                echo "<a href='../controllers/generar_factura.php?id=" . $venta['id'] . "' class='btn-factura' target='_blank'>";
+                                echo "<a href='../controllers/ventas/generar_factura.php?id=" . $venta['id'] . "' class='btn-factura' target='_blank'>";
                                 echo "<span class='material-icons'>receipt</span>";
                                 echo "</a>";
                                 echo "</td>";
@@ -845,6 +845,7 @@ if (!$resultado) {
             <h2>Registrar Nueva Venta</h2>
             <div id="mensaje-error-insertar" class="mensaje error" style="display: none;"></div>
             <form id="formInsertar" class="form-insertar">
+                <input type="hidden" id="id_cliente" name="id_cliente" value="">
                 <div class="form-group">
                     <label for="fecha_venta">Fecha de Venta:</label>
                     <input type="datetime-local" id="fecha_venta" name="fecha_venta" required>
@@ -920,6 +921,7 @@ if (!$resultado) {
             <div id="mensaje-error-editar" class="mensaje error" style="display: none;"></div>
             <form id="formEditar" class="form-editar">
                 <input type="hidden" id="edit_id" name="id">
+                <input type="hidden" id="edit_id_cliente" name="id_cliente" value="">
                 <div class="form-group">
                     <label for="edit_fecha_venta">Fecha de Venta:</label>
                     <input type="datetime-local" id="edit_fecha_venta" name="fecha_venta" required>
@@ -1068,7 +1070,7 @@ if (!$resultado) {
             <span class="close" onclick="cerrarModalInsertarCliente()">&times;</span>
             <h2>Insertar Nuevo Cliente</h2>
             <div id="mensaje-error-insertar-cliente" class="mensaje error" style="display: none;"></div>
-            <form id="formInsertarCliente" class="form-insertar" method="POST" action="../controllers/insertar_cliente.php">
+            <form id="formInsertarCliente" class="form-insertar">
                 <div class="form-group">
                     <label for="nombre">Nombre:</label>
                     <input type="text" id="nombre" name="nombre" required>
@@ -1094,12 +1096,19 @@ if (!$resultado) {
     </div>
 
     <script>
-        // Funciones para el modal de insertar
+        // Función para abrir el modal de insertar
         function abrirModalInsertar() {
             document.getElementById('modalInsertar').style.display = 'block';
             document.getElementById('mensaje-error-insertar').style.display = 'none';
+            
+            // Limpiar campos al abrir el modal
+            document.getElementById('precio_unitario').value = '';
+            document.getElementById('total').value = '';
+            document.getElementById('cantidad').value = '';
+            document.getElementById('id_producto').value = '';
             document.getElementById('id_categoria').value = '';
-            filtrarProductos(); // Resetear el filtro de productos
+            
+            console.log('Modal de inserción abierto - campos inicializados');
         }
 
         function cerrarModalInsertar() {
@@ -1108,12 +1117,15 @@ if (!$resultado) {
             document.getElementById('mensaje-error-insertar').style.display = 'none';
             document.getElementById('precio_unitario').value = '';
             document.getElementById('total').value = '';
+            document.getElementById('cantidad').value = '';
+            console.log('Modal de inserción cerrado - campos limpiados');
         }
 
         // Funciones para el modal de editar
         function abrirModalEditar(venta) {
             document.getElementById('modalEditar').style.display = 'block';
             document.getElementById('edit_id').value = venta.id;
+            document.getElementById('edit_id_cliente').value = venta.id_cliente;
             // Convertir la fecha al formato correcto para el input datetime-local
             const fecha = new Date(venta.fecha_venta);
             const fechaFormateada = fecha.toISOString().slice(0, 16);
@@ -1134,13 +1146,33 @@ if (!$resultado) {
         function calcularTotal() {
             const cantidad = document.getElementById('cantidad').value;
             const precio = document.getElementById('precio_unitario').value;
-            document.getElementById('total').value = (cantidad * precio).toFixed(2);
+            
+            console.log('calcularTotal - Cantidad:', cantidad);
+            console.log('calcularTotal - Precio unitario:', precio);
+            
+            if (cantidad && precio) {
+                const total = (parseFloat(cantidad) * parseFloat(precio)).toFixed(2);
+                document.getElementById('total').value = total;
+                console.log('calcularTotal - Total calculado:', total);
+            } else {
+                document.getElementById('total').value = '';
+            }
         }
 
         function calcularTotalEditar() {
             const cantidad = document.getElementById('edit_cantidad').value;
             const precio = document.getElementById('edit_precio_unitario').value;
-            document.getElementById('edit_total').value = (cantidad * precio).toFixed(2);
+            
+            console.log('calcularTotalEditar - Cantidad:', cantidad);
+            console.log('calcularTotalEditar - Precio unitario:', precio);
+            
+            if (cantidad && precio) {
+                const total = (parseFloat(cantidad) * parseFloat(precio)).toFixed(2);
+                document.getElementById('edit_total').value = total;
+                console.log('calcularTotalEditar - Total calculado:', total);
+            } else {
+                document.getElementById('edit_total').value = '';
+            }
         }
 
         // Función para filtrar productos por categoría
@@ -1173,10 +1205,41 @@ if (!$resultado) {
             const precio = option.getAttribute('data-precio');
             const stock = option.getAttribute('data-stock');
             
+            console.log('actualizarPrecio - Producto seleccionado:', select.value);
+            console.log('actualizarPrecio - Precio obtenido:', precio);
+            console.log('actualizarPrecio - Stock obtenido:', stock);
+            
             if (select.value !== '') {
                 document.getElementById('precio_unitario').value = precio;
                 document.getElementById('cantidad').max = stock;
-                calcularTotal();
+                document.getElementById('cantidad').value = '';
+                document.getElementById('total').value = '';
+                console.log('actualizarPrecio - Precio unitario establecido:', precio);
+            } else {
+                document.getElementById('precio_unitario').value = '';
+                document.getElementById('total').value = '';
+            }
+        }
+
+        // Función para actualizar precio en el modal de editar
+        function actualizarPrecioEditar() {
+            const select = document.getElementById('edit_id_producto');
+            const option = select.options[select.selectedIndex];
+            const precio = option.getAttribute('data-precio');
+            const stock = option.getAttribute('data-stock');
+            
+            console.log('actualizarPrecioEditar - Producto seleccionado:', select.value);
+            console.log('actualizarPrecioEditar - Precio obtenido:', precio);
+            console.log('actualizarPrecioEditar - Stock obtenido:', stock);
+            
+            if (select.value !== '') {
+                document.getElementById('edit_precio_unitario').value = precio;
+                document.getElementById('edit_cantidad').max = stock;
+                calcularTotalEditar();
+                console.log('actualizarPrecioEditar - Precio unitario establecido:', precio);
+            } else {
+                document.getElementById('edit_precio_unitario').value = '';
+                document.getElementById('edit_total').value = '';
             }
         }
 
@@ -1212,10 +1275,10 @@ if (!$resultado) {
                     <button onclick="abrirModalEditar(${JSON.stringify(nuevaVenta)})" class="btn-editar">
                         <span class="material-icons">edit</span>
                     </button>
-                    <a href="../controllers/eliminar_venta.php?id=${nuevaVenta.id}" class="btn-eliminar" onclick="return confirm('¿Estás seguro de eliminar esta venta?')">
+                    <a href="../controllers/ventas/eliminar_venta.php?id=${nuevaVenta.id}" class="btn-eliminar" onclick="return confirm('¿Estás seguro de eliminar esta venta?')">
                         <span class="material-icons">delete</span>
                     </a>
-                    <a href="../controllers/generar_factura.php?id=${nuevaVenta.id}" class="btn-factura" target="_blank">
+                    <a href="../controllers/ventas/generar_factura.php?id=${nuevaVenta.id}" class="btn-factura" target="_blank">
                         <span class="material-icons">receipt</span>
                     </a>
                 </td>
@@ -1232,12 +1295,22 @@ if (!$resultado) {
             const mensajeError = document.getElementById('mensaje-error-insertar');
             mensajeError.style.display = 'none';
             
-            fetch('../controllers/insertar_venta.php', {
+            // Log para debugging
+            console.log('Enviando formulario de venta...');
+            for (let [key, value] of formData.entries()) {
+                console.log(key + ': ' + value);
+            }
+            
+            fetch('../controllers/ventas/insertar_venta.php', {
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.json())
+            .then(response => {
+                console.log('Respuesta del servidor:', response.status);
+                return response.json();
+            })
             .then(data => {
+                console.log('Datos recibidos:', data);
                 if (data.success) {
                     actualizarTablaVentas(data.venta);
                     cerrarModalInsertar();
@@ -1271,7 +1344,7 @@ if (!$resultado) {
             const mensajeError = document.getElementById('mensaje-error-editar');
             mensajeError.style.display = 'none';
             
-            fetch('../controllers/actualizar_venta.php', {
+            fetch('../controllers/ventas/actualizar_venta.php', {
                 method: 'POST',
                 body: formData
             })
@@ -1311,10 +1384,10 @@ if (!$resultado) {
                                 <button onclick="abrirModalEditar(${JSON.stringify(data)})" class="btn-editar">
                                     <span class="material-icons">edit</span>
                                 </button>
-                                <a href="../controllers/eliminar_venta.php?id=${data.id}" class="btn-eliminar" onclick="return confirm('¿Estás seguro de eliminar esta venta?')">
+                                <a href="../controllers/ventas/eliminar_venta.php?id=${data.id}" class="btn-eliminar" onclick="return confirm('¿Estás seguro de eliminar esta venta?')">
                                     <span class="material-icons">delete</span>
                                 </a>
-                                <a href="../controllers/generar_factura.php?id=${data.id}" class="btn-factura" target="_blank">
+                                <a href="../controllers/ventas/generar_factura.php?id=${data.id}" class="btn-factura" target="_blank">
                                     <span class="material-icons">receipt</span>
                                 </a>
                             </td>
@@ -1379,7 +1452,7 @@ if (!$resultado) {
             const año = new Date().getFullYear();
 
             // Realizar la petición al servidor
-            fetch(`../controllers/obtener_ventas_mes.php?mes=${mes}&año=${año}`)
+            fetch(`../controllers/ventas/obtener_ventas_mes.php?mes=${mes}&año=${año}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
@@ -1437,7 +1510,7 @@ if (!$resultado) {
             }
 
             // Si hay ID de cliente, continuar con la lógica existente
-            fetch(`../controllers/obtener_cliente.php?id=${idCliente}`)
+            fetch(`../controllers/clientes/obtener_cliente.php?id=${idCliente}`)
                 .then(response => response.json())
                 .then(cliente => {
                     document.getElementById('fecha-guia').textContent = new Date().toLocaleDateString();
@@ -1622,15 +1695,29 @@ if (!$resultado) {
             const mensajeError = document.getElementById('mensaje-error-insertar-cliente');
             mensajeError.style.display = 'none';
             
-            fetch('../controllers/insertar_cliente.php', {
+            // Log para debugging
+            console.log('Enviando formulario de cliente...');
+            for (let [key, value] of formData.entries()) {
+                console.log(key + ': ' + value);
+            }
+            
+            fetch('../controllers/clientes/insertar_cliente_venta.php', {
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.json())
+            .then(response => {
+                console.log('Respuesta del servidor (cliente):', response.status);
+                if (!response.ok) {
+                    throw new Error('Error de conexión: ' + response.status);
+                }
+                return response.json();
+            })
             .then(data => {
+                console.log('Datos recibidos (cliente):', data);
                 if (data.success) {
                     cerrarModalInsertarCliente();
                     alert('Cliente agregado exitosamente');
+                    console.log('Cliente creado con ID:', data.cliente_id);
                     // Aquí podrías actualizar la lista de clientes si es necesario
                 } else {
                     mensajeError.textContent = data.message;
@@ -1639,7 +1726,7 @@ if (!$resultado) {
             })
             .catch(error => {
                 console.error('Error:', error);
-                mensajeError.textContent = 'Error al procesar la solicitud. Por favor, intente nuevamente.';
+                mensajeError.textContent = 'Error de conexión: ' + error.message;
                 mensajeError.style.display = 'block';
             });
         });

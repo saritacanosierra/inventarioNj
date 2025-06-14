@@ -25,532 +25,9 @@ $clientes = $conexion->query($sql_clientes);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registrar Venta - Sistema de Inventario</title>
     <link rel="stylesheet" href="../css/estilos.css">
+    <link rel="stylesheet" href="../css/registrar_venta.css">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <style>
-        /* Estilos consistentes con las demás vistas */
-        .contenedor-principal {
-            min-height: 100vh;
-            background-color: #f5f5f5;
-        }
-
-        .contenido {
-            width: 100%;
-            padding: 20px;
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            max-width: 1600px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .contenido h2 {
-            color: #333;
-            margin-bottom: 20px;
-            font-size: 24px;
-            font-weight: 600;
-        }
-
-        /* Layout de 2 columnas */
-        .layout-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 40px;
-            align-items: start;
-            justify-content: center;
-            width: 100%;
-        }
-
-        .columna-izquierda {
-            display: flex;
-            flex-direction: column;
-            gap: 25px;
-            width: 100%;
-        }
-
-        .columna-derecha {
-            display: flex;
-            flex-direction: column;
-            gap: 25px;
-            width: 100%;
-        }
-
-        .form-section {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-            width: 100%;
-            box-sizing: border-box;
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 25px;
-            margin-bottom: 25px;
-        }
-
-        .form-group {
-            margin-bottom: 25px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #333;
-            font-size: 14px;
-        }
-
-        .form-group input,
-        .form-group select {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #ddd;
-            border-radius: 6px;
-            font-size: 14px;
-            transition: all 0.3s ease;
-            box-sizing: border-box;
-            height: 45px;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus {
-            outline: none;
-            border-color: #E1B8E2;
-            box-shadow: 0 0 0 3px rgba(225, 184, 226, 0.2);
-        }
-
-        .form-group input[readonly] {
-            background-color: #f8f9fa;
-            color: #495057;
-            font-weight: 600;
-            border-color: #ced4da;
-        }
-
-        .form-group input[type="number"] {
-            text-align: right;
-            font-family: 'Courier New', monospace;
-        }
-
-        .form-group input[readonly][type="number"] {
-            background-color: #e9ecef;
-            color: #495057;
-            font-weight: bold;
-        }
-
-        .productos-section {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-            width: 100%;
-            box-sizing: border-box;
-        }
-
-        .producto-item {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            border: 1px solid #e9ecef;
-        }
-
-        .producto-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        .producto-title {
-            font-weight: 600;
-            color: #333;
-            font-size: 14px;
-        }
-
-        .btn-remove-producto {
-            background: #dc3545;
-            color: white;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .btn-remove-producto:hover {
-            background: #c82333;
-        }
-
-        .producto-fields {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
-            gap: 10px;
-            align-items: end;
-        }
-
-        .producto-fields .form-group:first-child {
-            grid-column: 1 / -1;
-            margin-bottom: 10px;
-        }
-
-        .producto-fields .form-group:first-child select {
-            width: 100%;
-        }
-
-        .producto-fields .form-group:nth-child(2) {
-            grid-column: 1 / -1;
-            margin-bottom: 10px;
-        }
-
-        .producto-fields .form-group:nth-child(2) select {
-            width: 100%;
-        }
-
-        .producto-fields .form-group:nth-child(3),
-        .producto-fields .form-group:nth-child(4),
-        .producto-fields .form-group:nth-child(5) {
-            grid-column: span 1;
-        }
-
-        .producto-fields .form-group:nth-child(6) {
-            display: none;
-        }
-
-        .btn-add-producto {
-            background: #28a745;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 14px;
-        }
-
-        .btn-add-producto:hover {
-            background: #218838;
-            transform: translateY(-1px);
-        }
-
-        .resumen-section {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-            width: 100%;
-            box-sizing: border-box;
-        }
-
-        .resumen-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-
-        .resumen-item {
-            text-align: center;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 8px;
-        }
-
-        .resumen-label {
-            font-size: 12px;
-            color: #666;
-            margin-bottom: 5px;
-        }
-
-        .resumen-value {
-            font-size: 20px;
-            font-weight: bold;
-            color: #333;
-        }
-
-        .total-general {
-            text-align: center;
-            padding: 15px;
-            background: linear-gradient(135deg, #E1B8E2, #d4a7d5);
-            border-radius: 8px;
-            color: #333;
-        }
-
-        .total-general .resumen-value {
-            font-size: 28px;
-            color: #333;
-        }
-
-        .actions-section {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
-            border: none;
-            padding: 8px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 14px;
-        }
-
-        .btn-secondary:hover {
-            background: #5a6268;
-            transform: translateY(-1px);
-        }
-
-        .btn-primary {
-            background: #E1B8E2;
-            color: #333;
-            border: none;
-            padding: 8px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 14px;
-            transition: all 0.3s ease;
-        }
-
-        .btn-primary:hover {
-            background: #d4a7d5;
-            transform: translateY(-1px);
-        }
-
-        .btn-primary:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .mensaje {
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 6px;
-            font-weight: 600;
-        }
-
-        .mensaje.error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        .mensaje.success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .producto-info {
-            font-size: 11px;
-            color: #666;
-            margin-top: 3px;
-        }
-
-        .stock-disponible {
-            color: #28a745;
-            font-weight: 600;
-        }
-
-        .stock-bajo {
-            color: #ffc107;
-            font-weight: 600;
-        }
-
-        .sin-stock {
-            color: #dc3545;
-            font-weight: 600;
-        }
-
-        /* Estilos del modal */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.5);
-        }
-
-        .modal-content {
-            background-color: #fefefe;
-            margin: 5% auto;
-            padding: 20px;
-            border-radius: 10px;
-            width: 90%;
-            max-width: 500px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-
-        .close {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .close:hover {
-            color: #000;
-        }
-
-        .form-insertar {
-            margin-top: 20px;
-        }
-
-        .form-buttons {
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-            margin-top: 20px;
-        }
-
-        .btn-guardar {
-            background: #28a745;
-            color: white;
-            border: none;
-            padding: 8px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .btn-guardar:hover {
-            background: #218838;
-        }
-
-        .btn-cancelar {
-            background: #6c757d;
-            color: white;
-            border: none;
-            padding: 8px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .btn-cancelar:hover {
-            background: #5a6268;
-        }
-
-        /* Optimizaciones adicionales para pantallas más pequeñas */
-        @media (max-width: 1600px) {
-            .contenido {
-                max-width: 1400px;
-            }
-            
-            .layout-container {
-                grid-template-columns: 1fr 1fr;
-                gap: 30px;
-            }
-        }
-
-        @media (max-width: 1400px) {
-            .contenido {
-                max-width: 1200px;
-            }
-            
-            .layout-container {
-                grid-template-columns: 1fr 1fr;
-                gap: 25px;
-            }
-        }
-
-        @media (max-width: 1200px) {
-            .contenido {
-                max-width: 100%;
-                margin: 15px;
-            }
-            
-            .layout-container {
-                grid-template-columns: 1fr 1fr;
-                gap: 20px;
-            }
-            
-            .producto-fields {
-                grid-template-columns: 1fr 1fr 1fr;
-                gap: 8px;
-            }
-            
-            .producto-fields .form-group:first-child,
-            .producto-fields .form-group:nth-child(2) {
-                grid-column: 1 / -1;
-            }
-            
-            .producto-fields .form-group:nth-child(3),
-            .producto-fields .form-group:nth-child(4),
-            .producto-fields .form-group:nth-child(5) {
-                grid-column: span 1;
-            }
-            
-            .form-row {
-                grid-template-columns: 1fr;
-                gap: 10px;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .contenido {
-                margin: 10px;
-                padding: 15px;
-            }
-            
-            .layout-container {
-                width: 100%;
-                grid-template-columns: 1fr;
-                gap: 15px;
-            }
-            
-            .form-section, .productos-section, .resumen-section {
-                padding: 15px;
-            }
-            
-            .resumen-grid {
-                grid-template-columns: 1fr;
-                gap: 10px;
-            }
-            
-            .producto-fields {
-                grid-template-columns: 1fr;
-                gap: 8px;
-            }
-            
-            .producto-fields .form-group:first-child,
-            .producto-fields .form-group:nth-child(2) {
-                grid-column: 1;
-            }
-            
-            .producto-fields .form-group:nth-child(3),
-            .producto-fields .form-group:nth-child(4),
-            .producto-fields .form-group:nth-child(5) {
-                grid-column: 1;
-            }
-        }
-    </style>
+   
 </head>
 <body>
     
@@ -562,7 +39,7 @@ $clientes = $conexion->query($sql_clientes);
             
             <div id="mensaje" class="mensaje" style="display: none;"></div>
 
-            <form id="formVenta" method="POST" action="../controllers/procesar_venta.php">
+            <form id="formVenta" method="POST" action="../controllers/ventas/procesar_venta.php">
                 <!-- Layout de 2 columnas -->
                 <div class="layout-container">
                     <!-- Columna izquierda -->
@@ -679,7 +156,7 @@ $clientes = $conexion->query($sql_clientes);
             <span class="close" onclick="cerrarModalInsertarCliente()">&times;</span>
             <h2>Insertar Nuevo Cliente</h2>
             <div id="mensaje-error-insertar-cliente" class="mensaje error" style="display: none;"></div>
-            <form id="formInsertarCliente" class="form-insertar" method="POST" action="../controllers/insertar_cliente.php">
+            <form id="formInsertarCliente" class="form-insertar" method="POST" action="../controllers/clientes/insertar_cliente_venta.php">
                 <div class="form-group">
                     <label for="nombre">Nombre:</label>
                     <input type="text" id="nombre" name="nombre" required>
@@ -997,46 +474,59 @@ $clientes = $conexion->query($sql_clientes);
             btnGuardar.textContent = 'Guardando...';
             btnGuardar.disabled = true;
             
-            fetch('../controllers/insertar_cliente.php', {
+            fetch('./controllers/financiero/actualizar_financiero.php', {
                 method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
                 body: formData
             })
             .then(response => {
                 console.log('Response status:', response.status);
-                console.log('Response headers:', response.headers);
                 return response.text();
             })
             .then(text => {
                 console.log('Response text:', text);
                 try {
-                    return JSON.parse(text);
+                    const data = JSON.parse(text);
+                    if (data.success) {
+                        // Buscar la fila que contiene el código de cliente
+                        const filas = document.querySelectorAll('#tabla-clientes tr');
+                        let row = null;
+                        for (let fila of filas) {
+                            const primeraCelda = fila.querySelector('td:first-child');
+                            if (primeraCelda && primeraCelda.textContent.trim() === data.cliente_id.toString()) {
+                                row = fila;
+                                break;
+                            }
+                        }
+                        
+                        if (row) {
+                            row.innerHTML = `
+                                <td>${data.cliente_id}</td>
+                                <td>${data.nombre}</td>
+                                <td>${data.cedula}</td>
+                                <td>${data.celular}</td>
+                                <td class="acciones">
+                                    <button onclick="abrirModalEditar(${JSON.stringify(data)})" class="btn-editar">
+                                        <span class="material-icons">edit</span>
+                                    </button>
+                                    <a href="../controllers/clientes/eliminar_cliente.php?cliente_id=${data.cliente_id}" class="btn-eliminar" onclick="return confirm('¿Estás seguro de eliminar este registro?')">
+                                        <span class="material-icons">delete</span>
+                                    </a>
+                                </td>
+                            `;
+                        }
+                        
+                        cerrarModalInsertarCliente();
+                        mostrarMensaje('Cliente agregado exitosamente', 'success');
+                    } else {
+                        mensajeError.textContent = data.message;
+                        mensajeError.style.display = 'block';
+                    }
                 } catch (e) {
                     console.error('Error parsing JSON:', e);
                     throw new Error('Respuesta no válida del servidor: ' + text);
-                }
-            })
-            .then(data => {
-                console.log('Parsed data:', data);
-                if (data.success) {
-                    // Agregar el nuevo cliente al select
-                    const selectCliente = document.getElementById('id_cliente');
-                    const option = document.createElement('option');
-                    option.value = data.cliente_id;
-                    option.textContent = `${data.nombre} - ${data.cedula}`;
-                    selectCliente.appendChild(option);
-                    
-                    // Seleccionar el nuevo cliente
-                    selectCliente.value = data.cliente_id;
-                    
-                    // Cerrar modal
-                    cerrarModalInsertarCliente();
-                    
-                    // Mostrar mensaje de éxito
-                    mostrarMensaje('Cliente agregado exitosamente', 'success');
-                } else {
-                    // Mostrar error en el modal
-                    mensajeError.textContent = data.message || 'Error al agregar cliente';
-                    mensajeError.style.display = 'block';
                 }
             })
             .catch(error => {

@@ -20,7 +20,7 @@
                         <span class="material-icons">account_circle</span>
                     </button>
                     <div id="userDropdown" class="dropdown-content">
-                        <a href="/inventarioNj/cerrar_sesion.php" class="cerrar-sesion">Cerrar Sesión</a>
+                        <a href="/inventarioNj/controllers/usuarios/cerrar_sesion.php" class="cerrar-sesion">Cerrar Sesión</a>
                     </div>
                 </div>
             </li>

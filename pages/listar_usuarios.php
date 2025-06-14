@@ -60,10 +60,17 @@ if (!$resultado) {
                                 <td><?php echo $usuario['contrasena']; ?></td>
                                 <td><?php echo $usuario['email']; ?></td>
                                 <td class="acciones">
-                                    <button onclick="abrirModalEditar(<?php echo htmlspecialchars(json_encode($usuario)); ?>)" class="btn-editar">
+                                    <button onclick="abrirModalEditar(<?php echo $usuario['id']; ?>)" class="btn-editar" 
+                                            data-id="<?php echo $usuario['id']; ?>"
+                                            data-cedula="<?php echo htmlspecialchars($usuario['cedula']); ?>"
+                                            data-nombre="<?php echo htmlspecialchars($usuario['nombre']); ?>"
+                                            data-apellido="<?php echo htmlspecialchars($usuario['apellido']); ?>"
+                                            data-usuario="<?php echo htmlspecialchars($usuario['usuario']); ?>"
+                                            data-contrasena="<?php echo htmlspecialchars($usuario['contrasena']); ?>"
+                                            data-email="<?php echo htmlspecialchars($usuario['email']); ?>">
                                         <span class="material-icons">edit</span>
                                     </button>
-                                    <a href="../controllers/eliminar_usuarios.php?id=<?php echo $usuario['id']; ?>" class="btn-eliminar" onclick="return confirm('¿Estás seguro de eliminar este usuario?')">
+                                    <a href="../controllers/usuarios/eliminar_usuarios.php?id=<?php echo $usuario['id']; ?>" class="btn-eliminar" onclick="return confirm('¿Estás seguro de eliminar este usuario?')">
                                         <span class="material-icons">delete</span>
                                     </a>
                                 </td>
@@ -283,18 +290,26 @@ if (!$resultado) {
         }
 
         // Funciones para el modal de editar
-        function abrirModalEditar(usuario) {
-            document.getElementById('modalEditar').style.display = 'block';
-            document.getElementById('mensaje-error-editar').style.display = 'none';
-            
-            // Llenar el formulario con los datos del usuario
-            document.getElementById('edit-id').value = usuario.id;
-            document.getElementById('edit-cedula').value = usuario.cedula;
-            document.getElementById('edit-nombre').value = usuario.nombre;
-            document.getElementById('edit-apellido').value = usuario.apellido;
-            document.getElementById('edit-usuario').value = usuario.usuario;
-            document.getElementById('edit-contrasena').value = usuario.contrasena;
-            document.getElementById('edit-email').value = usuario.email;
+        function abrirModalEditar(id) {
+            try {
+                const botonEditar = document.querySelector(`button[data-id="${id}"]`);
+                if (botonEditar) {
+                    document.getElementById('modalEditar').style.display = 'block';
+                    document.getElementById('mensaje-error-editar').style.display = 'none';
+                    
+                    // Llenar el formulario con los datos del usuario
+                    document.getElementById('edit-id').value = id;
+                    document.getElementById('edit-cedula').value = botonEditar.getAttribute('data-cedula');
+                    document.getElementById('edit-nombre').value = botonEditar.getAttribute('data-nombre');
+                    document.getElementById('edit-apellido').value = botonEditar.getAttribute('data-apellido');
+                    document.getElementById('edit-usuario').value = botonEditar.getAttribute('data-usuario');
+                    document.getElementById('edit-contrasena').value = botonEditar.getAttribute('data-contrasena');
+                    document.getElementById('edit-email').value = botonEditar.getAttribute('data-email');
+                }
+            } catch (error) {
+                console.error('Error al abrir modal de editar:', error);
+                alert('Error al abrir el modal de editar');
+            }
         }
 
         function cerrarModalEditar() {
@@ -323,7 +338,7 @@ if (!$resultado) {
             const mensajeError = document.getElementById('mensaje-error-insertar');
             mensajeError.style.display = 'none';
             
-            fetch('../controllers/insertar_usuarios.php', {
+            fetch('../controllers/usuarios/insertar_usuarios.php', {
                 method: 'POST',
                 body: formData
             })
@@ -342,10 +357,17 @@ if (!$resultado) {
                         <td>${data.contrasena}</td>
                         <td>${data.email}</td>
                         <td class="acciones">
-                            <button onclick="abrirModalEditar(${JSON.stringify(data)})" class="btn-editar">
+                            <button onclick="abrirModalEditar(${data.id})" class="btn-editar" 
+                                    data-id="${data.id}"
+                                    data-cedula="${data.cedula}"
+                                    data-nombre="${data.nombre}"
+                                    data-apellido="${data.apellido}"
+                                    data-usuario="${data.usuario}"
+                                    data-contrasena="${data.contrasena}"
+                                    data-email="${data.email}">
                                 <span class="material-icons">edit</span>
                             </button>
-                            <a href="../controllers/eliminar_usuarios.php?id=${data.id}" class="btn-eliminar" onclick="return confirm('¿Estás seguro de eliminar este usuario?')">
+                            <a href="../controllers/usuarios/eliminar_usuarios.php?id=${data.id}" class="btn-eliminar" onclick="return confirm('¿Estás seguro de eliminar este usuario?')">
                                 <span class="material-icons">delete</span>
                             </a>
                         </td>
@@ -374,32 +396,47 @@ if (!$resultado) {
             const mensajeError = document.getElementById('mensaje-error-editar');
             mensajeError.style.display = 'none';
             
-            fetch('../controllers/actualizar_usuarios.php', {
+            fetch('../controllers/usuarios/actualizar_usuarios.php', {
                 method: 'POST',
                 body: formData
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Actualizar la fila en la tabla
-                    const row = document.querySelector(`tr td:first-child:contains('${data.id}')`).parentNode;
-                    row.innerHTML = `
-                        <td>${data.id}</td>
-                        <td>${data.cedula}</td>
-                        <td>${data.nombre}</td>
-                        <td>${data.apellido}</td>
-                        <td>${data.usuario}</td>
-                        <td>${data.contrasena}</td>
-                        <td>${data.email}</td>
-                        <td class="acciones">
-                            <button onclick="abrirModalEditar(${JSON.stringify(data)})" class="btn-editar">
-                                <span class="material-icons">edit</span>
-                            </button>
-                            <a href="../controllers/eliminar_usuarios.php?id=${data.id}" class="btn-eliminar" onclick="return confirm('¿Estás seguro de eliminar este usuario?')">
-                                <span class="material-icons">delete</span>
-                            </a>
-                        </td>
-                    `;
+                    // Buscar la fila correcta y actualizarla
+                    const tbody = document.getElementById('tabla-usuarios');
+                    const filas = tbody.getElementsByTagName('tr');
+                    
+                    for (let i = 0; i < filas.length; i++) {
+                        const primeraCelda = filas[i].getElementsByTagName('td')[0];
+                        if (primeraCelda && primeraCelda.textContent == data.id) {
+                            filas[i].innerHTML = `
+                                <td>${data.id}</td>
+                                <td>${data.cedula}</td>
+                                <td>${data.nombre}</td>
+                                <td>${data.apellido}</td>
+                                <td>${data.usuario}</td>
+                                <td>${data.contrasena}</td>
+                                <td>${data.email}</td>
+                                <td class="acciones">
+                                    <button onclick="abrirModalEditar(${data.id})" class="btn-editar" 
+                                            data-id="${data.id}"
+                                            data-cedula="${data.cedula}"
+                                            data-nombre="${data.nombre}"
+                                            data-apellido="${data.apellido}"
+                                            data-usuario="${data.usuario}"
+                                            data-contrasena="${data.contrasena}"
+                                            data-email="${data.email}">
+                                        <span class="material-icons">edit</span>
+                                    </button>
+                                    <a href="../controllers/usuarios/eliminar_usuarios.php?id=${data.id}" class="btn-eliminar" onclick="return confirm('¿Estás seguro de eliminar este usuario?')">
+                                        <span class="material-icons">delete</span>
+                                    </a>
+                                </td>
+                            `;
+                            break;
+                        }
+                    }
                     
                     cerrarModalEditar();
                     alert('Usuario actualizado exitosamente');

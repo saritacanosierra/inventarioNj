@@ -1,107 +1,18 @@
 <?php
 require_once __DIR__ . '/../conexion.php';
+require_once __DIR__ . '/../controllers/envios/envios.php';
 session_start();
 
 // Obtener el ID de la venta si existe
 $id_venta = isset($_GET['id_venta']) ? intval($_GET['id_venta']) : null;
 
-// Modificar la tabla ventas para agregar la relación con clientes
-$sql_modificar_ventas = "ALTER TABLE ventas 
-    ADD COLUMN id_cliente INT(11) NOT NULL AFTER id,
-    ADD FOREIGN KEY (id_cliente) REFERENCES clientes(id)";
+// Crear instancia del manager de envíos
+$enviosManager = new EnviosManager($conexion);
 
-try {
-    $conexion->query($sql_modificar_ventas);
-    echo "<script>console.log('Tabla ventas modificada exitosamente');</script>";
-} catch (Exception $e) {
-    echo "<script>console.log('Error al modificar la tabla ventas: " . $e->getMessage() . "');</script>";
-}
-
-// Procesar el formulario cuando se envía
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $nombre = trim($_POST['nombre']);
-    $cedula = trim($_POST['cedula']);
-    $celular = trim($_POST['celular']);
-    $direccion = trim($_POST['direccion']);
-    
-    // Validar que los campos no estén vacíos
-    if (empty($nombre) || empty($cedula) || empty($celular) || empty($direccion)) {
-        echo "<script>alert('Todos los campos son obligatorios');</script>";
-    } else {
-        // Verificar si la cédula ya existe
-        $sql_check = "SELECT id, total_compras FROM clientes WHERE cedula = ?";
-        $stmt_check = $conexion->prepare($sql_check);
-        $stmt_check->bind_param("s", $cedula);
-        $stmt_check->execute();
-        $result_check = $stmt_check->get_result();
-        
-        if ($result_check->num_rows > 0) {
-            // Cliente existe, actualizar sus datos y total_compras
-            $cliente = $result_check->fetch_assoc();
-            $nuevo_total = $cliente['total_compras'] + 1;
-            
-            $sql_update = "UPDATE clientes SET 
-                          nombre = ?, 
-                          celular = ?, 
-                          direccion = ?, 
-                          total_compras = ? 
-                          WHERE id = ?";
-            $stmt_update = $conexion->prepare($sql_update);
-            $stmt_update->bind_param("sssii", $nombre, $celular, $direccion, $nuevo_total, $cliente['id']);
-            
-            if ($stmt_update->execute()) {
-                // Si hay un ID de venta, actualizar la venta con el ID del cliente
-                if ($id_venta) {
-                    $sql_actualizar = "UPDATE ventas SET id_cliente = ? WHERE id = ?";
-                    $stmt_actualizar = $conexion->prepare($sql_actualizar);
-                    $stmt_actualizar->bind_param("ii", $cliente['id'], $id_venta);
-                    $stmt_actualizar->execute();
-                    $stmt_actualizar->close();
-                    
-                    header("Location: ventas.php?mensaje=Cliente actualizado y asociado a la venta exitosamente");
-                    exit;
-                } else {
-                    header("Location: envios.php?mensaje=Cliente actualizado exitosamente");
-                    exit;
-                }
-            } else {
-                header("Location: envios.php?error=Error al actualizar cliente: " . urlencode($stmt_update->error));
-                exit;
-            }
-            $stmt_update->close();
-        } else {
-            // Insertar el nuevo cliente
-            $sql = "INSERT INTO clientes (nombre, cedula, celular, direccion, fecha_registro, total_compras) 
-                    VALUES (?, ?, ?, ?, NOW(), 1)";
-            $stmt = $conexion->prepare($sql);
-            $stmt->bind_param("ssss", $nombre, $cedula, $celular, $direccion);
-            
-            if ($stmt->execute()) {
-                $id_cliente = $conexion->insert_id;
-                
-                // Si hay un ID de venta, actualizar la venta con el ID del cliente
-                if ($id_venta) {
-                    $sql_actualizar = "UPDATE ventas SET id_cliente = ? WHERE id = ?";
-                    $stmt_actualizar = $conexion->prepare($sql_actualizar);
-                    $stmt_actualizar->bind_param("ii", $id_cliente, $id_venta);
-                    $stmt_actualizar->execute();
-                    $stmt_actualizar->close();
-                    
-                    header("Location: ventas.php?mensaje=Cliente agregado y asociado a la venta exitosamente");
-                    exit;
-                } else {
-                    header("Location: envios.php?mensaje=Cliente agregado exitosamente");
-                    exit;
-                }
-            } else {
-                header("Location: envios.php?error=Error al agregar cliente: " . urlencode($stmt->error));
-                exit;
-            }
-            $stmt->close();
-        }
-        $stmt_check->close();
-    }
-    exit;
+// Modificar la tabla ventas para agregar la relación con clientes (solo si es necesario)
+$resultado_modificacion = $enviosManager->modificarTablaVentas();
+if (!$resultado_modificacion['success']) {
+    echo "<script>console.log('" . $resultado_modificacion['message'] . "');</script>";
 }
 
 // Mostrar mensajes al inicio de la página
@@ -112,9 +23,8 @@ if (isset($_GET['error'])) {
     echo "<script>alert('" . htmlspecialchars($_GET['error']) . "');</script>";
 }
 
-// Obtener todos los clientes
-$sql = "SELECT * FROM clientes ORDER BY fecha_registro DESC";
-$resultado = $conexion->query($sql);
+// Obtener todos los clientes usando el manager
+$resultado = $enviosManager->obtenerClientes();
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -511,7 +421,7 @@ $resultado = $conexion->query($sql);
                                 echo "<button onclick='abrirModalGuia(" . htmlspecialchars(json_encode($cliente)) . ")' class='btn-guia'>";
                                 echo "<span class='material-icons'>local_shipping</span>";
                                 echo "</button>";
-                                echo "<a href='../controllers/eliminar_cliente.php?id=" . $cliente['id'] . "' class='btn-eliminar' onclick='return confirm(\"¿Estás seguro de eliminar este cliente?\")'>";
+                                echo "<a href='../controllers/clientes/eliminar_cliente.php?id=" . $cliente['id'] . "' class='btn-eliminar' onclick='return confirm(\"¿Estás seguro de eliminar este cliente?\")'>";
                                 echo "<span class='material-icons'>delete</span>";
                                 echo "</a>";
                                 echo "</td>";
@@ -533,7 +443,7 @@ $resultado = $conexion->query($sql);
             <span class="close" onclick="cerrarModalInsertar()">&times;</span>
             <h2>Insertar Nuevo Cliente</h2>
             <div id="mensaje-error-insertar" class="mensaje error" style="display: none;"></div>
-            <form id="formInsertar" method="POST" action="">
+            <form id="formInsertar" method="POST" action="../controllers/envios/envios.php<?php echo $id_venta ? '?id_venta=' . $id_venta : ''; ?>">
                 <div class="form-group">
                     <label for="nombre">Nombre:</label>
                     <input type="text" id="nombre" name="nombre" required>
@@ -564,7 +474,7 @@ $resultado = $conexion->query($sql);
             <span class="close" onclick="cerrarModalEditar()">&times;</span>
             <h2>Editar Cliente</h2>
             <div id="mensaje-error-editar" class="mensaje error" style="display: none;"></div>
-            <form id="formEditar" class="form-editar" method="POST" action="../controllers/actualizar_cliente.php">
+            <form id="formEditar" class="form-editar">
                 <input type="hidden" id="edit_id" name="id">
                 <div class="form-group">
                     <label for="edit_nombre">Nombre:</label>
@@ -850,7 +760,7 @@ $resultado = $conexion->query($sql);
 
         function asociarClienteAVenta(idCliente, idVenta) {
             if (confirm('¿Desea asociar este cliente a la venta #' + idVenta + '?')) {
-                fetch('../controllers/asociar_cliente_venta.php', {
+                fetch('../controllers/clientes/asociar_cliente_venta.php', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -892,6 +802,36 @@ $resultado = $conexion->query($sql);
             
             // Si todo está bien, enviar el formulario
             this.submit();
+        });
+
+        // Manejar el envío del formulario de edición
+        document.getElementById('formEditar').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            
+            fetch('../controllers/clientes/actualizar_cliente.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.text())
+            .then(html => {
+                // Extraer el mensaje del script de alerta
+                const match = html.match(/alert\('([^']+)'\)/);
+                if (match) {
+                    alert(match[1]);
+                }
+                
+                // Cerrar el modal
+                cerrarModalEditar();
+                
+                // Recargar la página para mostrar los cambios
+                window.location.reload();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al procesar la solicitud');
+            });
         });
     </script>
 </body>

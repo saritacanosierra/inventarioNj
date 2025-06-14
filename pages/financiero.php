@@ -8,6 +8,8 @@ if (!$resultado) {
     die('Error al obtener la lista de registros financieros: ' . $conexion->error);
 }
 
+$uploadDir = '../../uploads/productos/';
+
 ?>
 
 <!DOCTYPE html>
@@ -19,6 +21,7 @@ if (!$resultado) {
     <link rel="stylesheet" href="../css/estilos.css">
     <link rel="stylesheet" href="../css/index.css">
     <link rel="stylesheet" href="../css/tablas.css">
+    <link rel="stylesheet" href="../css/financiero.css">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 <body>
@@ -64,7 +67,7 @@ if (!$resultado) {
                                     <button onclick="abrirModalEditar(<?php echo htmlspecialchars(json_encode($registro)); ?>)" class="btn-editar">
                                         <span class="material-icons">edit</span>
                                     </button>
-                                    <a href="../controllers/eliminar_financiero.php?codigoProveedor=<?php echo $registro['codigoProveedor']; ?>" class="btn-eliminar" onclick="return confirm('¿Estás seguro de eliminar este registro?')">
+                                    <a href="../controllers/productos/eliminar_producto.php?id=<?php echo $registro['codigoProveedor']; ?>" class="btn-eliminar" onclick="return confirm('¿Estás seguro de eliminar este registro?')">
                                         <span class="material-icons">delete</span>
                                     </a>
                                 </td>
@@ -167,179 +170,7 @@ if (!$resultado) {
         </div>
     </div>
 
-    <style>
-        .container{
-            width: 90%;
-            margin: 0 auto;
-        }
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.4);
-        }
-
-        .modal-content {
-            background-color: #fefefe;
-            margin: 5% auto;
-            padding: 20px;
-            border: 1px solid #888;
-            width: 90%;
-            max-width: 500px;
-            border-radius: 5px;
-        }
-
-        .close {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .close:hover {
-            color: black;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-
-        .form-buttons {
-            margin-top: 20px;
-            text-align: right;
-        }
-
-        .btn-guardar, .btn-cancelar {
-            padding: 8px 20px;
-            margin-left: 10px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        .btn-guardar {
-            background-color: #E1B8E2;
-            color: black;
-        }
-
-        .btn-cancelar {
-            background-color: #f44336;
-            color: white;
-        }
-
-        .mensaje {
-            padding: 10px;
-            margin-bottom: 15px;
-            border-radius: 4px;
-        }
-
-        .error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        .acciones {
-            display: flex;
-            gap: 10px;
-        }
-
-        .btn-editar, .btn-eliminar {
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 5px;
-        }
-
-        .btn-editar .material-icons {
-            color: #2196F3;
-        }
-
-        .btn-eliminar .material-icons {
-            color: #f44336;
-        }
-
-        .btn-editar:hover .material-icons {
-            color: #1976D2;
-        }
-
-        .btn-eliminar:hover .material-icons {
-            color: #d32f2f;
-        }
-
-        .filtro-agregar-contenedor {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            width: 100%;
-            padding: 0 15px;
-            gap: 2px;
-        }
-
-        .filtro-contenedor {
-            flex: 1;
-            margin-right: 10px;
-            max-width: calc(100% - 40px);
-        }
-
-        .filtro-input {
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            width: 100%;
-            font-size: 14px;
-            transition: border-color 0.3s;
-            min-width: 300px;
-        }
-
-        .filtro-input:focus {
-            outline: none;
-            border-color: #E1B8E2;
-            box-shadow: 0 0 0 2px rgba(225, 184, 226, 0.25);
-        }
-
-        .filtro-input::placeholder {
-            color: #999;
-        }
-
-        .btn-agregar {
-            background-color: #E1B8E2;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            font-size: 24px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background-color 0.3s;
-        }
-
-        .btn-agregar:hover {
-            background-color: #d1a8d2;
-        }
-    </style>
+    
 
     <script>
         // Funciones para el modal de insertar
@@ -394,7 +225,7 @@ if (!$resultado) {
             const mensajeError = document.getElementById('mensaje-error-insertar');
             mensajeError.style.display = 'none';
             
-            fetch('../controllers/insertar_financiero.php', {
+            fetch('../controllers/financiero/insertar_financiero.php', {
                 method: 'POST',
                 body: formData
             })
@@ -416,7 +247,7 @@ if (!$resultado) {
                             <button onclick="abrirModalEditar(${JSON.stringify(data)})" class="btn-editar">
                                 <span class="material-icons">edit</span>
                             </button>
-                            <a href="../controllers/eliminar_financiero.php?codigoProveedor=${data.codigoProveedor}" class="btn-eliminar" onclick="return confirm('¿Estás seguro de eliminar este registro?')">
+                            <a href="../controllers/productos/eliminar_producto.php?id=${data.codigoProveedor}" class="btn-eliminar" onclick="return confirm('¿Estás seguro de eliminar este registro?')">
                                 <span class="material-icons">delete</span>
                             </a>
                         </td>
@@ -445,7 +276,7 @@ if (!$resultado) {
             const mensajeError = document.getElementById('mensaje-error-editar');
             mensajeError.style.display = 'none';
             
-            fetch('../controllers/actualizar_financiero.php', {
+            fetch('../controllers/financiero/actualizar_financiero.php', {
                 method: 'POST',
                 body: formData
             })
@@ -466,7 +297,7 @@ if (!$resultado) {
                             <button onclick="abrirModalEditar(${JSON.stringify(data)})" class="btn-editar">
                                 <span class="material-icons">edit</span>
                             </button>
-                            <a href="../controllers/eliminar_financiero.php?codigoProveedor=${data.codigoProveedor}" class="btn-eliminar" onclick="return confirm('¿Estás seguro de eliminar este registro?')">
+                            <a href="../controllers/productos/eliminar_producto.php?id=${data.codigoProveedor}" class="btn-eliminar" onclick="return confirm('¿Estás seguro de eliminar este registro?')">
                                 <span class="material-icons">delete</span>
                             </a>
                         </td>
