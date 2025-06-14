@@ -67,7 +67,7 @@ $uploadDir = '../../uploads/productos/';
                                     <button onclick="abrirModalEditar(<?php echo htmlspecialchars(json_encode($registro)); ?>)" class="btn-editar">
                                         <span class="material-icons">edit</span>
                                     </button>
-                                    <a href="../controllers/productos/eliminar_producto.php?id=<?php echo $registro['codigoProveedor']; ?>" class="btn-eliminar" onclick="return confirm('¿Estás seguro de eliminar este registro?')">
+                                    <a href="../controllers/financiero/eliminar_financiero.php?id=<?php echo $registro['codigoProveedor']; ?>" class="btn-eliminar" onclick="return confirm('¿Estás seguro de eliminar este registro?')">
                                         <span class="material-icons">delete</span>
                                     </a>
                                 </td>
@@ -247,7 +247,7 @@ $uploadDir = '../../uploads/productos/';
                             <button onclick="abrirModalEditar(${JSON.stringify(data)})" class="btn-editar">
                                 <span class="material-icons">edit</span>
                             </button>
-                            <a href="../controllers/productos/eliminar_producto.php?id=${data.codigoProveedor}" class="btn-eliminar" onclick="return confirm('¿Estás seguro de eliminar este registro?')">
+                            <a href="../controllers/financiero/eliminar_financiero.php?id=${data.codigoProveedor}" class="btn-eliminar" onclick="return confirm('¿Estás seguro de eliminar este registro?')">
                                 <span class="material-icons">delete</span>
                             </a>
                         </td>
@@ -269,23 +269,26 @@ $uploadDir = '../../uploads/productos/';
         });
 
         // Manejar el envío del formulario de editar
-        document.getElementById('formEditar').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const formData = new FormData(this);
-            const mensajeError = document.getElementById('mensaje-error-editar');
-            mensajeError.style.display = 'none';
-            
-            fetch('../controllers/financiero/actualizar_financiero.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Actualizar la fila en la tabla
-                    const row = document.querySelector(`tr td:first-child:contains('${data.codigoProveedor}')`).parentNode;
-                    row.innerHTML = `
+     document.getElementById('formEditar').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const mensajeError = document.getElementById('mensaje-error-editar');
+    mensajeError.style.display = 'none';
+    
+    fetch('../controllers/financiero/actualizar_financiero.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Actualizar la fila en la tabla
+            const filas = document.querySelectorAll('#tabla-financiera tr');
+            filas.forEach(fila => {
+                const codigoCelda = fila.querySelector('td:first-child');
+                if (codigoCelda && codigoCelda.textContent === data.codigoProveedor.toString()) {
+                    fila.innerHTML = `
                         <td>${data.codigoProveedor}</td>
                         <td>${data.nombreProveedor}</td>
                         <td>${data.fechaCompra}</td>
@@ -297,26 +300,28 @@ $uploadDir = '../../uploads/productos/';
                             <button onclick="abrirModalEditar(${JSON.stringify(data)})" class="btn-editar">
                                 <span class="material-icons">edit</span>
                             </button>
-                            <a href="../controllers/productos/eliminar_producto.php?id=${data.codigoProveedor}" class="btn-eliminar" onclick="return confirm('¿Estás seguro de eliminar este registro?')">
+                            <a href="../controllers/financiero/eliminar_financiero.php?id=${data.codigoProveedor}" class="btn-eliminar" onclick="return confirm('¿Estás seguro de eliminar este registro?')">
                                 <span class="material-icons">delete</span>
                             </a>
                         </td>
                     `;
-                    
-                    cerrarModalEditar();
-                    alert('Registro actualizado exitosamente');
-                } else {
-                    mensajeError.textContent = data.message;
-                    mensajeError.style.display = 'block';
                 }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                mensajeError.textContent = 'Error al procesar la solicitud. Por favor, intente nuevamente.';
-                mensajeError.style.display = 'block';
             });
-        });
-
+            cerrarModalEditar();
+            alert('Registro actualizado exitosamente');
+        } else {
+            // Solo mostrar error si el backend dice que no se hizo el cambio
+            mensajeError.textContent = data.message || 'No se pudo actualizar el registro.';
+            mensajeError.style.display = 'block';
+        }
+    })
+    // Solo mostrar error si el fetch realmente falla (por ejemplo, servidor caído)
+    .catch(error => {
+        console.error('Error:', error);
+        mensajeError.textContent = 'Error de conexión con el servidor.';
+        mensajeError.style.display = 'block';
+    });
+});
         // Función para filtrar registros
         document.getElementById('filtro-financiero').addEventListener('keyup', function() {
             const filtro = this.value.toLowerCase();

@@ -1,6 +1,5 @@
 <?php
 require_once __DIR__ . '/../../conexion.php';
-require_once __DIR__ . '/../envios/envios.php';
 session_start();
 
 // Habilitar reporte de errores para debug
@@ -9,10 +8,11 @@ ini_set('display_errors', 1);
 
 // Log para debugging
 error_log('insertar_cliente_venta.php - Iniciando proceso - ' . date('Y-m-d H:i:s'));
+error_log('Session data: ' . print_r($_SESSION, true));
 
 // Verificar si el usuario está logueado
 if (!isset($_SESSION['usuario'])) {
-    error_log('insertar_cliente_venta.php - Usuario no autorizado');
+    error_log('insertar_cliente_venta.php - Usuario no autorizado - Session data: ' . print_r($_SESSION, true));
     header('Content-Type: application/json');
     echo json_encode(['success' => false, 'message' => 'No autorizado']);
     exit();
@@ -43,29 +43,45 @@ if (empty($nombre) || empty($cedula) || empty($celular) || empty($direccion)) {
 }
 
 try {
-    // Crear instancia del manager de envíos
-    $enviosManager = new EnviosManager($conexion);
+    // Verificar si el cliente ya existe
+    $stmt = $conexion->prepare("SELECT id FROM clientes WHERE cedula = ?");
+    $stmt->bind_param("s", $cedula);
+    $stmt->execute();
+    $result = $stmt->get_result();
     
-    // Procesar el cliente usando el manager (sin asociar a venta, devolver JSON)
-    $resultado = $enviosManager->procesarCliente($_POST, null, true);
+    if ($result->num_rows > 0) {
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'message' => 'Ya existe un cliente con esta cédula']);
+        exit();
+    }
+
+    // Insertar nuevo cliente
+    $sql = "INSERT INTO clientes (nombre, cedula, celular, direccion, fecha_registro, total_compras) 
+            VALUES (?, ?, ?, ?, NOW(), 1)";
+    $stmt = $conexion->prepare($sql);
+    $stmt->bind_param("ssss", $nombre, $cedula, $celular, $direccion);
     
-    if ($resultado['success']) {
-        // Obtener el cliente por cédula para devolver sus datos
-        $cliente = $enviosManager->obtenerClientePorCedula($cedula);
+    if ($stmt->execute()) {
+        $id_cliente = $conexion->insert_id;
+        
+        // Obtener el cliente recién creado
+        $stmt = $conexion->prepare("SELECT * FROM clientes WHERE id = ?");
+        $stmt->bind_param("i", $id_cliente);
+        $stmt->execute();
+        $cliente = $stmt->get_result()->fetch_assoc();
         
         header('Content-Type: application/json');
         echo json_encode([
             'success' => true, 
-            'message' => $resultado['message'],
+            'message' => 'Cliente agregado exitosamente',
             'cliente_id' => $cliente['id'],
             'nombre' => $cliente['nombre'],
-            'cedula' => $cliente['cedula']
+            'cedula' => $cliente['cedula'],
+            'celular' => $cliente['celular']
         ]);
     } else {
-        header('Content-Type: application/json');
-        echo json_encode(['success' => false, 'message' => $resultado['message']]);
+        throw new Exception("Error al registrar el cliente");
     }
-    
 } catch (Exception $e) {
     header('Content-Type: application/json');
     echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);

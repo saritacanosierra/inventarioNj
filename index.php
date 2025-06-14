@@ -32,30 +32,46 @@ $pagina = isset($_GET['pagina']) ? $_GET['pagina'] : 'inicio';
             $añoActual = date('Y');
 
             // Consulta para obtener el total de gastos del mes
-            $sqlGastos = "SELECT SUM(valorCompra) as totalGastos 
+            $sqlGastos = "SELECT COALESCE(SUM(valorCompra), 0) as totalGastos 
                          FROM financiera 
                          WHERE MONTH(fechaCompra) = ? 
                          AND YEAR(fechaCompra) = ? 
                          AND tipoCompra = 'gasto'";
             
             $stmtGastos = $conexion->prepare($sqlGastos);
-            $stmtGastos->bind_param("ss", $mesActual, $añoActual);
+            $stmtGastos->bind_param("ii", $mesActual, $añoActual);
             $stmtGastos->execute();
             $resultadoGastos = $stmtGastos->get_result();
-            $totalGastos = $resultadoGastos->fetch_assoc()['totalGastos'] ?? 0;
+            $totalGastos = $resultadoGastos->fetch_assoc()['totalGastos'];
 
             // Consulta para obtener el total de inversiones del mes
-            $sqlInversiones = "SELECT SUM(valorCompra) as totalInversiones 
+            $sqlInversiones = "SELECT COALESCE(SUM(valorCompra), 0) as totalInversiones 
                               FROM financiera 
                               WHERE MONTH(fechaCompra) = ? 
                               AND YEAR(fechaCompra) = ? 
                               AND tipoCompra = 'inversion'";
             
             $stmtInversiones = $conexion->prepare($sqlInversiones);
-            $stmtInversiones->bind_param("ss", $mesActual, $añoActual);
+            $stmtInversiones->bind_param("ii", $mesActual, $añoActual);
             $stmtInversiones->execute();
             $resultadoInversiones = $stmtInversiones->get_result();
-            $totalInversiones = $resultadoInversiones->fetch_assoc()['totalInversiones'] ?? 0;
+            $totalInversiones = $resultadoInversiones->fetch_assoc()['totalInversiones'];
+
+            // Consulta para obtener el total de compras del mes
+            $sqlCompras = "SELECT COALESCE(SUM(valorCompra), 0) as totalCompras 
+                          FROM financiera 
+                          WHERE MONTH(fechaCompra) = ? 
+                          AND YEAR(fechaCompra) = ? 
+                          AND tipoCompra = 'compra'";
+            
+            $stmtCompras = $conexion->prepare($sqlCompras);
+            $stmtCompras->bind_param("ii", $mesActual, $añoActual);
+            $stmtCompras->execute();
+            $resultadoCompras = $stmtCompras->get_result();
+            $totalCompras = $resultadoCompras->fetch_assoc()['totalCompras'];
+
+            // Calcular el total de gastos (incluyendo compras)
+            $totalGastos = $totalGastos + $totalCompras;
 
             // Inicializar el total de ventas en 0
             $totalVentas = 0;

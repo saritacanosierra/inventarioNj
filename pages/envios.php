@@ -443,7 +443,7 @@ $resultado = $enviosManager->obtenerClientes();
             <span class="close" onclick="cerrarModalInsertar()">&times;</span>
             <h2>Insertar Nuevo Cliente</h2>
             <div id="mensaje-error-insertar" class="mensaje error" style="display: none;"></div>
-            <form id="formInsertar" method="POST" action="../controllers/envios/envios.php<?php echo $id_venta ? '?id_venta=' . $id_venta : ''; ?>">
+            <form id="formInsertar" class="form-insertar">
                 <div class="form-group">
                     <label for="nombre">Nombre:</label>
                     <input type="text" id="nombre" name="nombre" required>
@@ -786,22 +786,61 @@ $resultado = $enviosManager->obtenerClientes();
             }
         }
 
-        // Función para validar el formulario antes de enviar
+        // Manejar el envío del formulario de insertar
         document.getElementById('formInsertar').addEventListener('submit', function(e) {
             e.preventDefault();
             
-            const nombre = document.getElementById('nombre').value.trim();
-            const cedula = document.getElementById('cedula').value.trim();
-            const celular = document.getElementById('celular').value.trim();
-            const direccion = document.getElementById('direccion').value.trim();
+            const formData = new FormData(this);
+            const mensajeError = document.getElementById('mensaje-error-insertar');
+            mensajeError.style.display = 'none';
             
-            if (!nombre || !cedula || !celular || !direccion) {
-                alert('Todos los campos son obligatorios');
-                return;
-            }
-            
-            // Si todo está bien, enviar el formulario
-            this.submit();
+            fetch('../controllers/envios/envios.php', {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Agregar el nuevo cliente a la tabla
+                    const tbody = document.getElementById('tabla-clientes');
+                    const newRow = document.createElement('tr');
+                    newRow.innerHTML = `
+                        <td>${data.id}</td>
+                        <td>${data.nombre}</td>
+                        <td>${data.cedula}</td>
+                        <td>${data.celular}</td>
+                        <td>${data.direccion}</td>
+                        <td>1</td>
+                        <td>${new Date().toLocaleDateString()}</td>
+                        <td class="acciones">
+                            <button onclick="abrirModalEditar(${JSON.stringify(data)})" class="btn-editar">
+                                <span class="material-icons">edit</span>
+                            </button>
+                            <button onclick="abrirModalGuia(${JSON.stringify(data)})" class="btn-guia">
+                                <span class="material-icons">local_shipping</span>
+                            </button>
+                            <a href="../controllers/clientes/eliminar_cliente.php?id=${data.id}" class="btn-eliminar" onclick="return confirm('¿Estás seguro de eliminar este cliente?')">
+                                <span class="material-icons">delete</span>
+                            </a>
+                        </td>
+                    `;
+                    tbody.insertBefore(newRow, tbody.firstChild);
+                    
+                    cerrarModalInsertar();
+                    alert('Cliente agregado exitosamente');
+                } else {
+                    mensajeError.textContent = data.message;
+                    mensajeError.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                mensajeError.textContent = 'Error al procesar la solicitud. Por favor, intente nuevamente.';
+                mensajeError.style.display = 'block';
+            });
         });
 
         // Manejar el envío del formulario de edición

@@ -70,9 +70,9 @@ if (!$resultado) {
                                             data-email="<?php echo htmlspecialchars($usuario['email']); ?>">
                                         <span class="material-icons">edit</span>
                                     </button>
-                                    <a href="../controllers/usuarios/eliminar_usuarios.php?id=<?php echo $usuario['id']; ?>" class="btn-eliminar" onclick="return confirm('¿Estás seguro de eliminar este usuario?')">
+                                    <button onclick="eliminarUsuario(<?php echo $usuario['id']; ?>)" class="btn-eliminar">
                                         <span class="material-icons">delete</span>
-                                    </a>
+                                    </button>
                                 </td>
                             </tr>
                         <?php endwhile; ?>
@@ -367,9 +367,9 @@ if (!$resultado) {
                                     data-email="${data.email}">
                                 <span class="material-icons">edit</span>
                             </button>
-                            <a href="../controllers/usuarios/eliminar_usuarios.php?id=${data.id}" class="btn-eliminar" onclick="return confirm('¿Estás seguro de eliminar este usuario?')">
+                            <button onclick="eliminarUsuario(${data.id})" class="btn-eliminar">
                                 <span class="material-icons">delete</span>
-                            </a>
+                            </button>
                         </td>
                     `;
                     tbody.insertBefore(newRow, tbody.firstChild);
@@ -429,9 +429,9 @@ if (!$resultado) {
                                             data-email="${data.email}">
                                         <span class="material-icons">edit</span>
                                     </button>
-                                    <a href="../controllers/usuarios/eliminar_usuarios.php?id=${data.id}" class="btn-eliminar" onclick="return confirm('¿Estás seguro de eliminar este usuario?')">
+                                    <button onclick="eliminarUsuario(${data.id})" class="btn-eliminar">
                                         <span class="material-icons">delete</span>
-                                    </a>
+                                    </button>
                                 </td>
                             `;
                             break;
@@ -474,6 +474,33 @@ if (!$resultado) {
                 fila.style.display = mostrar ? '' : 'none';
             }
         });
+
+        // Función para eliminar usuario
+        function eliminarUsuario(id) {
+            if (confirm('¿Estás seguro de eliminar este usuario?')) {
+                fetch(`../controllers/usuarios/eliminar_usuarios.php?id=${id}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Eliminar la fila de la tabla
+                            const filas = document.querySelectorAll('#tabla-usuarios tr');
+                            filas.forEach(fila => {
+                                const primeraCelda = fila.querySelector('td:first-child');
+                                if (primeraCelda && primeraCelda.textContent == id) {
+                                    fila.remove();
+                                }
+                            });
+                            alert('Usuario eliminado exitosamente');
+                        } else {
+                            alert(data.message || 'Error al eliminar el usuario');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Error al procesar la solicitud. Por favor, intente nuevamente.');
+                    });
+            }
+        }
     </script>
 </body>
 </html>

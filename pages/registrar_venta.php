@@ -1,6 +1,9 @@
 <?php
 require '../conexion.php';
 
+// Add session start
+session_start();
+
 // Obtener categorías
 $sql_categorias = "SELECT id, codigo, nombre FROM categoria ORDER BY nombre";
 $categorias = $conexion->query($sql_categorias);
@@ -156,7 +159,7 @@ $clientes = $conexion->query($sql_clientes);
             <span class="close" onclick="cerrarModalInsertarCliente()">&times;</span>
             <h2>Insertar Nuevo Cliente</h2>
             <div id="mensaje-error-insertar-cliente" class="mensaje error" style="display: none;"></div>
-            <form id="formInsertarCliente" class="form-insertar" method="POST" action="../controllers/clientes/insertar_cliente_venta.php">
+            <form id="formInsertarCliente" class="form-insertar">
                 <div class="form-group">
                     <label for="nombre">Nombre:</label>
                     <input type="text" id="nombre" name="nombre" required>
@@ -474,7 +477,8 @@ $clientes = $conexion->query($sql_clientes);
             btnGuardar.textContent = 'Guardando...';
             btnGuardar.disabled = true;
             
-            fetch('./controllers/financiero/actualizar_financiero.php', {
+            console.log('Enviando solicitud a:', '../../controllers/clientes/insertar_cliente_venta.php');
+            fetch('../../controllers/clientes/insertar_cliente_venta.php', {
                 method: 'POST',
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest'
@@ -483,6 +487,7 @@ $clientes = $conexion->query($sql_clientes);
             })
             .then(response => {
                 console.log('Response status:', response.status);
+                console.log('Response URL:', response.url);
                 return response.text();
             })
             .then(text => {
@@ -490,33 +495,13 @@ $clientes = $conexion->query($sql_clientes);
                 try {
                     const data = JSON.parse(text);
                     if (data.success) {
-                        // Buscar la fila que contiene el código de cliente
-                        const filas = document.querySelectorAll('#tabla-clientes tr');
-                        let row = null;
-                        for (let fila of filas) {
-                            const primeraCelda = fila.querySelector('td:first-child');
-                            if (primeraCelda && primeraCelda.textContent.trim() === data.cliente_id.toString()) {
-                                row = fila;
-                                break;
-                            }
-                        }
-                        
-                        if (row) {
-                            row.innerHTML = `
-                                <td>${data.cliente_id}</td>
-                                <td>${data.nombre}</td>
-                                <td>${data.cedula}</td>
-                                <td>${data.celular}</td>
-                                <td class="acciones">
-                                    <button onclick="abrirModalEditar(${JSON.stringify(data)})" class="btn-editar">
-                                        <span class="material-icons">edit</span>
-                                    </button>
-                                    <a href="../controllers/clientes/eliminar_cliente.php?cliente_id=${data.cliente_id}" class="btn-eliminar" onclick="return confirm('¿Estás seguro de eliminar este registro?')">
-                                        <span class="material-icons">delete</span>
-                                    </a>
-                                </td>
-                            `;
-                        }
+                        // Agregar el nuevo cliente al select
+                        const select = document.getElementById('id_cliente');
+                        const option = document.createElement('option');
+                        option.value = data.cliente_id;
+                        option.text = `${data.nombre} - ${data.cedula}`;
+                        select.add(option);
+                        select.value = data.cliente_id;
                         
                         cerrarModalInsertarCliente();
                         mostrarMensaje('Cliente agregado exitosamente', 'success');

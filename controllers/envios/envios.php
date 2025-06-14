@@ -35,9 +35,6 @@ class EnviosManager {
         
         // Validar que los campos no estén vacíos
         if (empty($nombre) || empty($cedula) || empty($celular) || empty($direccion)) {
-            if ($returnJson) {
-                return ['success' => false, 'message' => 'Todos los campos son obligatorios'];
-            }
             return ['success' => false, 'message' => 'Todos los campos son obligatorios'];
         }
         
@@ -76,17 +73,19 @@ class EnviosManager {
             // Si hay un ID de venta, actualizar la venta con el ID del cliente
             if ($id_venta) {
                 $this->asociarClienteAVenta($cliente['id'], $id_venta);
-                if ($returnJson) {
-                    return ['success' => true, 'message' => 'Cliente actualizado y asociado a la venta exitosamente', 'redirect' => 'ventas.php'];
-                } else {
-                    return ['success' => true, 'message' => 'Cliente actualizado y asociado a la venta exitosamente', 'redirect' => 'ventas.php'];
-                }
+                return [
+                    'success' => true, 
+                    'message' => 'Cliente actualizado y asociado a la venta exitosamente',
+                    'redirect' => 'ventas.php',
+                    'id_cliente' => $cliente['id']
+                ];
             } else {
-                if ($returnJson) {
-                    return ['success' => true, 'message' => 'Cliente actualizado exitosamente', 'redirect' => 'envios.php'];
-                } else {
-                    return ['success' => true, 'message' => 'Cliente actualizado exitosamente', 'redirect' => 'envios.php'];
-                }
+                return [
+                    'success' => true, 
+                    'message' => 'Cliente actualizado exitosamente',
+                    'redirect' => 'envios.php',
+                    'id_cliente' => $cliente['id']
+                ];
             }
         } else {
             return ['success' => false, 'message' => 'Error al actualizar cliente: ' . $stmt_update->error];
@@ -108,17 +107,19 @@ class EnviosManager {
             // Si hay un ID de venta, actualizar la venta con el ID del cliente
             if ($id_venta) {
                 $this->asociarClienteAVenta($id_cliente, $id_venta);
-                if ($returnJson) {
-                    return ['success' => true, 'message' => 'Cliente agregado y asociado a la venta exitosamente', 'redirect' => 'ventas.php'];
-                } else {
-                    return ['success' => true, 'message' => 'Cliente agregado y asociado a la venta exitosamente', 'redirect' => 'ventas.php'];
-                }
+                return [
+                    'success' => true, 
+                    'message' => 'Cliente agregado y asociado a la venta exitosamente',
+                    'redirect' => 'ventas.php',
+                    'id_cliente' => $id_cliente
+                ];
             } else {
-                if ($returnJson) {
-                    return ['success' => true, 'message' => 'Cliente agregado exitosamente', 'redirect' => 'envios.php'];
-                } else {
-                    return ['success' => true, 'message' => 'Cliente agregado exitosamente', 'redirect' => 'envios.php'];
-                }
+                return [
+                    'success' => true, 
+                    'message' => 'Cliente agregado exitosamente',
+                    'redirect' => 'envios.php',
+                    'id_cliente' => $id_cliente
+                ];
             }
         } else {
             return ['success' => false, 'message' => 'Error al agregar cliente: ' . $stmt->error];
@@ -197,7 +198,7 @@ class EnviosManager {
 }
 
 // Si se llama directamente este archivo, procesar la lógica
-if ($_SERVER["REQUEST_METHOD"] == "POST" && !isset($_SERVER['HTTP_X_REQUESTED_WITH'])) {
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $enviosManager = new EnviosManager($conexion);
     
     // Obtener el ID de la venta si existe
@@ -206,7 +207,47 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && !isset($_SERVER['HTTP_X_REQUESTED_WI
     // Procesar el formulario
     $resultado = $enviosManager->procesarCliente($_POST, $id_venta);
     
-    // Redireccionar con el resultado
+    // Si es una petición AJAX, devolver JSON
+    if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+        header('Content-Type: application/json');
+        try {
+            if ($resultado['success']) {
+                // Obtener los datos del cliente recién creado
+                $sql = "SELECT * FROM clientes WHERE id = ?";
+                $stmt = $conexion->prepare($sql);
+                $stmt->bind_param("i", $resultado['id_cliente']);
+                $stmt->execute();
+                $cliente = $stmt->get_result()->fetch_assoc();
+                
+                if ($cliente) {
+                    echo json_encode([
+                        'success' => true,
+                        'message' => $resultado['message'],
+                        'id' => $cliente['id'],
+                        'nombre' => $cliente['nombre'],
+                        'cedula' => $cliente['cedula'],
+                        'celular' => $cliente['celular'],
+                        'direccion' => $cliente['direccion']
+                    ]);
+                } else {
+                    echo json_encode([
+                        'success' => false,
+                        'message' => 'Error al obtener los datos del cliente creado'
+                    ]);
+                }
+            } else {
+                echo json_encode($resultado);
+            }
+        } catch (Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Error en el servidor: ' . $e->getMessage()
+            ]);
+        }
+        exit;
+    }
+    
+    // Si no es AJAX, redireccionar con el resultado
     if ($resultado['success']) {
         header("Location: ../pages/" . $resultado['redirect'] . "?mensaje=" . urlencode($resultado['message']));
     } else {

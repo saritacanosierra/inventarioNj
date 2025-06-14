@@ -1,21 +1,31 @@
 <?php
 require '../../conexion.php';
 
+header('Content-Type: application/json');
+
 if (isset($_GET['id'])) {
     $id = $_GET['id'];
     $stmt = $conexion->prepare("DELETE FROM usuarios WHERE id = ?");
     $stmt->bind_param("i", $id);
 
     if ($stmt->execute()) {
-        header("Location: ../pages/listar_usuarios.php?mensaje=eliminado");
-        exit();
+        echo json_encode([
+            'success' => true,
+            'message' => 'Usuario eliminado correctamente'
+        ]);
     } else {
-        die('Error al eliminar el usuario: ' . $conexion->error);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Error al eliminar el usuario: ' . $conexion->error
+        ]);
     }
 
     $stmt->close();
 } else {
-    die("ID de usuario no proporcionado.");
+    echo json_encode([
+        'success' => false,
+        'message' => 'ID de usuario no proporcionado.'
+    ]);
 }
 
 $conexion->close();
