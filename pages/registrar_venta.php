@@ -4,6 +4,12 @@ require '../conexion.php';
 // Add session start
 session_start();
 
+// Verificar si el usuario está logueado
+if (!isset($_SESSION['usuario'])) {
+    header('Location: ../index.php');
+    exit();
+}
+
 // Obtener categorías
 $sql_categorias = "SELECT id, codigo, nombre FROM categoria ORDER BY nombre";
 $categorias = $conexion->query($sql_categorias);
@@ -477,12 +483,13 @@ $clientes = $conexion->query($sql_clientes);
             btnGuardar.textContent = 'Guardando...';
             btnGuardar.disabled = true;
             
-            console.log('Enviando solicitud a:', '../../controllers/clientes/insertar_cliente_venta.php');
-            fetch('../../controllers/clientes/insertar_cliente_venta.php', {
+            console.log('Enviando solicitud a:', '../controllers/clientes/insertar_cliente_venta.php');
+            fetch('../controllers/clientes/insertar_cliente_venta.php', {
                 method: 'POST',
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest'
                 },
+                credentials: 'same-origin',
                 body: formData
             })
             .then(response => {

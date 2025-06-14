@@ -1,5 +1,12 @@
 <?php
 require_once '../../conexion.php';
+session_start();
+
+// Verificar si el usuario está logueado
+if (!isset($_SESSION['usuario'])) {
+    header('Location: ../../pages/login.php');
+    exit;
+}
 
 // Verificar si la solicitud es POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -152,7 +159,8 @@ try {
     $conexion->commit();
 
     // Redireccionar con mensaje de éxito
-    header('Location: ../../pages/ventas.php?success=venta_registrada&id=' . $id_venta);
+    $_SESSION['mensaje'] = 'Venta registrada exitosamente';
+    header('Location: ../../pages/ventas.php');
     exit;
 
 } catch (Exception $e) {
@@ -162,7 +170,8 @@ try {
     }
     
     // Redireccionar con mensaje de error
-    header('Location: ../../pages/registrar_venta.php?error=' . urlencode($e->getMessage()));
+    $_SESSION['error'] = $e->getMessage();
+    header('Location: ../../pages/registrar_venta.php');
     exit;
 }
 
