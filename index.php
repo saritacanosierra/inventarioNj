@@ -1,5 +1,6 @@
 <?php
-require 'conexion.php';
+require_once 'conexion.php';
+require_once 'controllers/verificar_sesion.php';
 
 // Definir las páginas disponibles
 $paginas = [
@@ -314,56 +315,9 @@ $pagina = isset($_GET['pagina']) ? $_GET['pagina'] : 'inicio';
                 }
             </style>
 
-          
-
-            <style>
-                .social-media-container {
-                    display: flex;
-                    justify-content: center;
-                    gap: 20px;
-                    margin-top: 30px;
-                    flex-wrap: wrap;
-                }
-                .social-media-item {
-                    flex: 1;
-                    min-width: 150px;
-                    max-width: 150px;
-                    height: 200px;
-                }
-                .social-media-item iframe {
-                    width: 100%;
-                    height: 100%;
-                }
-            </style>
-
             <script>
                 document.addEventListener('DOMContentLoaded', function() {
-                    const slider = document.querySelector('.slider');
-                    const slides = document.querySelectorAll('.slide');
-                    const prevBtn = document.querySelector('.prev');
-                    const nextBtn = document.querySelector('.next');
-                    let currentSlide = 0;
-
-                    function updateSlider() {
-                        slider.style.transform = `translateX(-${currentSlide * 100}%)`;
-                    }
-
-                    function nextSlide() {
-                        currentSlide = (currentSlide + 1) % slides.length;
-                        updateSlider();
-                    }
-
-                    function prevSlide() {
-                        currentSlide = (currentSlide - 1 + slides.length) % slides.length;
-                        updateSlider();
-                    }
-
-                    // Auto slide cada 5 segundos
-                    setInterval(nextSlide, 5000);
-
-                    // Eventos de botones
-                    nextBtn.addEventListener('click', nextSlide);
-                    prevBtn.addEventListener('click', prevSlide);
+                    // Aquí puedes agregar otro código que necesites ejecutar cuando el DOM esté listo
                 });
             </script>
         </div>

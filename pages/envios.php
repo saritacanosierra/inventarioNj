@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../conexion.php';
 require_once __DIR__ . '/../controllers/envios/envios.php';
-session_start();
+require_once __DIR__ . '/../controllers/verificar_sesion.php';
 
 // Obtener el ID de la venta si existe
 $id_venta = isset($_GET['id_venta']) ? intval($_GET['id_venta']) : null;

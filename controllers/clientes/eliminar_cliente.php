@@ -1,9 +1,6 @@
 <?php
 require_once __DIR__ . '/../../conexion.php';
 
-// Log para depuración
-error_log('eliminar_cliente.php - Iniciando proceso de eliminación');
-
 // Verificar si se proporcionó un ID
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     error_log('eliminar_cliente.php - ID no válido: ' . ($_GET['id'] ?? 'no definido'));
@@ -15,12 +12,10 @@ if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
 }
 
 $id_cliente = intval($_GET['id']);
-error_log('eliminar_cliente.php - ID del cliente a eliminar: ' . $id_cliente);
 
 try {
     // Iniciar transacción
     $conexion->begin_transaction();
-    error_log('eliminar_cliente.php - Transacción iniciada');
 
     // Verificar si el cliente existe antes de eliminar
     $sql_check_exists = "SELECT id, nombre FROM clientes WHERE id = ?";
@@ -34,7 +29,6 @@ try {
     }
     
     $cliente = $result_exists->fetch_assoc();
-    error_log('eliminar_cliente.php - Cliente encontrado: ' . $cliente['nombre']);
 
     // Verificar si el cliente tiene ventas asociadas
     $sql_check_ventas = "SELECT COUNT(*) as total FROM ventas WHERE id_cliente = ?";
@@ -43,8 +37,6 @@ try {
     $stmt_check_ventas->execute();
     $result_ventas = $stmt_check_ventas->get_result();
     $row_ventas = $result_ventas->fetch_assoc();
-
-    error_log('eliminar_cliente.php - Ventas asociadas: ' . $row_ventas['total']);
 
     if ($row_ventas['total'] > 0) {
         throw new Exception("No se puede eliminar el cliente porque tiene ventas asociadas");
@@ -58,8 +50,6 @@ try {
     $result_envios = $stmt_check_envios->get_result();
     $row_envios = $result_envios->fetch_assoc();
 
-    error_log('eliminar_cliente.php - Envíos asociados: ' . $row_envios['total']);
-
     if ($row_envios['total'] > 0) {
         throw new Exception("No se puede eliminar el cliente porque tiene envíos asociados");
     }
@@ -69,14 +59,11 @@ try {
     $stmt = $conexion->prepare($sql);
     $stmt->bind_param("i", $id_cliente);
     
-    error_log('eliminar_cliente.php - Ejecutando DELETE para cliente ID: ' . $id_cliente);
-    
     if (!$stmt->execute()) {
         throw new Exception("Error al eliminar el cliente: " . $stmt->error);
     }
     
     $filas_afectadas = $stmt->affected_rows;
-    error_log('eliminar_cliente.php - Filas afectadas: ' . $filas_afectadas);
 
     if ($filas_afectadas == 0) {
         throw new Exception("No se pudo eliminar el cliente. Posiblemente ya no existe.");
@@ -84,7 +71,6 @@ try {
 
     // Confirmar la transacción
     $conexion->commit();
-    error_log('eliminar_cliente.php - Transacción confirmada');
 
     echo "<script>
         alert('Cliente eliminado exitosamente');
@@ -108,5 +94,4 @@ if (isset($stmt_check_ventas)) $stmt_check_ventas->close();
 if (isset($stmt_check_envios)) $stmt_check_envios->close();
 if (isset($stmt)) $stmt->close();
 $conexion->close();
-error_log('eliminar_cliente.php - Proceso finalizado');
 ?> 

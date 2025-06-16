@@ -1,8 +1,6 @@
 <?php
 require '../conexion.php';
-
-// Add session start
-session_start();
+require_once __DIR__ . '/../controllers/verificar_sesion.php';
 
 // Verificar si el usuario está logueado
 if (!isset($_SESSION['usuario'])) {
