@@ -2,23 +2,16 @@
 require_once '../../conexion.php';
 session_start();
 
-// Configurar encabezado para respuesta JSON
-header('Content-Type: application/json');
-
-// Función para enviar respuesta JSON y terminar
-function sendJsonResponse($success, $message, $data = []) {
-    echo json_encode(array_merge(['success' => $success, 'message' => $message], $data));
-    exit;
-}
-
 // Verificar si el usuario está logueado
 if (!isset($_SESSION['usuario'])) {
-    sendJsonResponse(false, 'Usuario no autenticado.');
+    header('Location: ../../pages/login.php');
+    exit;
 }
 
 // Verificar si la solicitud es POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    sendJsonResponse(false, 'Método no permitido.');
+    header('Location: ../../pages/registrar_venta.php?error=metodo_no_permitido');
+    exit;
 }
 
 try {
@@ -40,22 +33,15 @@ try {
     $fecha_venta = $_POST['fecha_venta'] ?? null;
     $tipo_pago = $_POST['tipo_pago'] ?? null;
     $estado = $_POST['estado'] ?? 'completada';
-    
-    // Decodificar el JSON de productos
-    $productos_json = $_POST['productos_venta_json'] ?? '[]';
-    $productos = json_decode($productos_json, true);
-
-    if (json_last_error() !== JSON_ERROR_NONE) {
-        throw new Exception('Error al decodificar los datos de los productos.');
-    }
+    $productos = $_POST['productos'] ?? [];
 
     if (!$fecha_venta || !$tipo_pago || empty($productos)) {
-        throw new Exception('Faltan datos requeridos para la venta o no se han agregado productos.');
+        throw new Exception('Faltan datos requeridos para la venta');
     }
 
     // Validar que haya al menos un producto
     if (count($productos) === 0) {
-        throw new Exception('Debe agregar al menos un producto a la venta.');
+        throw new Exception('Debe agregar al menos un producto');
     }
 
     // Iniciar transacción
@@ -64,15 +50,15 @@ try {
     // Calcular el total de la venta
     $total_venta = 0;
     foreach ($productos as $producto) {
-        if (!isset($producto['id']) || !isset($producto['cantidad']) || !isset($producto['precio_unitario'])) {
-            throw new Exception('Datos de producto incompletos en el JSON.');
+        if (!isset($producto['id_producto']) || !isset($producto['cantidad']) || !isset($producto['precio_unitario'])) {
+            throw new Exception('Datos de producto incompletos');
         }
         
         $cantidad = (int)$producto['cantidad'];
         $precio_unitario = (float)$producto['precio_unitario'];
         
         if ($cantidad <= 0 || $precio_unitario <= 0) {
-            throw new Exception('Cantidad y precio deben ser mayores a 0 para el producto ' . ($producto['nombre'] ?? $producto['id']) . '.');
+            throw new Exception('Cantidad y precio deben ser mayores a 0');
         }
         
         $total_venta += $cantidad * $precio_unitario;
@@ -119,7 +105,7 @@ try {
 
     // Insertar los detalles de la venta y actualizar stock
     foreach ($productos as $producto) {
-        $id_producto = (int)$producto['id']; // Usar 'id' del JSON
+        $id_producto = (int)$producto['id_producto'];
         $cantidad = (int)$producto['cantidad'];
         $precio_unitario = (float)$producto['precio_unitario'];
         $subtotal = $cantidad * $precio_unitario;
@@ -136,11 +122,11 @@ try {
         $producto_stock = $result_stock->fetch_assoc();
 
         if (!$producto_stock) {
-            throw new Exception("Producto no encontrado (ID: $id_producto).");
+            throw new Exception("Producto no encontrado");
         }
 
         if ($producto_stock['stock'] < $cantidad) {
-            throw new Exception("Stock insuficiente para el producto '" . ($producto['nombre'] ?? 'ID: ' . $id_producto) . "'. Stock disponible: {$producto_stock['stock']}. Solicitado: {$cantidad}.");
+            throw new Exception("Stock insuficiente para el producto ID: $id_producto");
         }
 
         // Insertar detalle de venta
@@ -153,7 +139,7 @@ try {
         $stmt_detalle->bind_param("iiidd", $id_venta, $id_producto, $cantidad, $precio_unitario, $subtotal);
         
         if (!$stmt_detalle->execute()) {
-            throw new Exception("Error al insertar detalle de venta para producto ID: $id_producto: " . $stmt_detalle->error);
+            throw new Exception("Error al insertar detalle de venta: " . $stmt_detalle->error);
         }
 
         // Actualizar stock del producto
@@ -165,15 +151,17 @@ try {
         $stmt_update_stock->bind_param("ii", $cantidad, $id_producto);
         
         if (!$stmt_update_stock->execute()) {
-            throw new Exception("Error al actualizar stock para producto ID: $id_producto: " . $stmt_update_stock->error);
+            throw new Exception("Error al actualizar stock: " . $stmt_update_stock->error);
         }
     }
 
     // Confirmar la transacción
     $conexion->commit();
 
-    // Enviar respuesta de éxito JSON
-    sendJsonResponse(true, 'Venta registrada exitosamente!');
+    // Redireccionar con mensaje de éxito
+    $_SESSION['mensaje'] = 'Venta registrada exitosamente';
+    header('Location: ../../pages/ventas.php');
+    exit;
 
 } catch (Exception $e) {
     // Revertir la transacción en caso de error
@@ -181,16 +169,17 @@ try {
         $conexion->rollback();
     }
     
-    // Enviar respuesta de error JSON
-    sendJsonResponse(false, 'Error al registrar la venta: ' . $e->getMessage());
-
-} finally {
-    // Cerrar las conexiones
-    if (isset($stmt_venta)) $stmt_venta->close();
-    if (isset($stmt_update_cliente)) $stmt_update_cliente->close();
-    if (isset($stmt_detalle)) $stmt_detalle->close();
-    if (isset($stmt_stock)) $stmt_stock->close();
-    if (isset($stmt_update_stock)) $stmt_update_stock->close();
-    $conexion->close();
+    // Redireccionar con mensaje de error
+    $_SESSION['error'] = $e->getMessage();
+    header('Location: ../../pages/registrar_venta.php');
+    exit;
 }
+
+// Cerrar las conexiones
+if (isset($stmt_venta)) $stmt_venta->close();
+if (isset($stmt_update_cliente)) $stmt_update_cliente->close();
+if (isset($stmt_detalle)) $stmt_detalle->close();
+if (isset($stmt_stock)) $stmt_stock->close();
+if (isset($stmt_update_stock)) $stmt_update_stock->close();
+$conexion->close();
 ?> 

@@ -1,10 +1,6 @@
 <?php
 require '../conexion.php';
 
-// Manejo de mensajes de la URL
-$message_status = $_GET['status'] ?? '';
-$message_text = $_GET['message'] ?? '';
-
 $sql = "SELECT v.id, v.fecha_venta, v.total, v.tipo_pago, v.estado, v.created_at,
        c.cedula as cedula_cliente, c.nombre as nombre_cliente,
        COUNT(dv.id) as cantidad_productos,
@@ -934,14 +930,13 @@ if (!$resultado) {
         
         <div class="contenido">
             <h2>Registro de Ventas</h2>
-            <div id="message-display" class="mensaje" style="display: none;"></div>
             
             <div class="filtro-agregar-contenedor">
                 <div class="filtro-contenedor">
                     <input type="text" id="filtro-venta" placeholder="Buscar venta..." class="filtro-input">
                 </div>
                 <div class="btn-agregar-contenedor">
-                    <a href="./registrar_venta.php" class="btn-ventas-mensuales" style="text-decoration: none; margin-right: 10px;">
+                    <a href="registrar_venta.php" class="btn-ventas-mensuales" style="text-decoration: none; margin-right: 10px;">
                         <span class="material-icons">add_shopping_cart</span>
                         Nueva Venta Completa
                     </a>
@@ -981,7 +976,7 @@ if (!$resultado) {
                                 
                     
                                 echo "</a>";
-                                echo "<a href='../controllers/ventas/eliminar_venta.php?id=" . $venta['id'] . "' class='btn-eliminar' onclick='return confirm(\"¿Estás seguro de eliminar esta venta?\" )'>";
+                                echo "<a href='../controllers/ventas/eliminar_venta.php?id=" . $venta['id'] . "' class='btn-eliminar' onclick='return confirm(\"¿Estás seguro de eliminar esta venta?\")'>";
                                 echo "<span class='material-icons'>delete</span>";
                                 echo "</a>";
                                 echo "<a href='../controllers/ventas/generar_factura.php?id=" . $venta['id'] . "' class='btn-factura' target='_blank'>";
@@ -1078,7 +1073,7 @@ if (!$resultado) {
     <!-- Modal de Editar Venta -->
     <div id="modalEditar" class="modal">
         <div class="modal-content">
-            <span class="close" onclick="cerrarModalEditar()">×</span>
+            <span class="close" onclick="cerrarModalEditar()">&times;</span>
             <h2>Editar Venta</h2>
             <div id="mensaje-error-editar" class="mensaje error" style="display: none;"></div>
             <form id="formEditar" class="form-editar">
@@ -1629,9 +1624,9 @@ if (!$resultado) {
                 .then(data => {
                     if (data.success) {
                         // Actualizar resumen
-                        document.getElementById('total-ventas-mes').textContent =
+                        document.getElementById('total-ventas-mes').textContent = 
                             `$${parseFloat(data.total_ventas).toFixed(2)}`;
-                        document.getElementById('cantidad-ventas-mes').textContent =
+                        document.getElementById('cantidad-ventas-mes').textContent = 
                             data.cantidad_ventas;
 
                         // Actualizar tabla
@@ -1865,7 +1860,12 @@ if (!$resultado) {
             const formData = new FormData(this);
             const mensajeError = document.getElementById('mensaje-error-insertar-cliente');
             mensajeError.style.display = 'none';
-        
+            
+            // Log para debugging
+            console.log('Enviando formulario de cliente...');
+            for (let [key, value] of formData.entries()) {
+                console.log(key + ': ' + value);
+            }
             
             fetch('../controllers/clientes/insertar_cliente_venta.php', {
                 method: 'POST',
@@ -1885,7 +1885,6 @@ if (!$resultado) {
                     alert('Cliente agregado exitosamente');
                     console.log('Cliente creado con ID:', data.cliente_id);
                     // Aquí podrías actualizar la lista de clientes si es necesario
-                    location.reload(); // Recargar para actualizar el select de clientes
                 } else {
                     mensajeError.textContent = data.message;
                     mensajeError.style.display = 'block';
@@ -2011,34 +2010,6 @@ if (!$resultado) {
                     console.error('Error:', error);
                 });
         }
-    </script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const status = urlParams.get('status');
-            const message = urlParams.get('message');
-            const messageDisplay = document.getElementById('message-display');
-
-            if (status && message) {
-                messageDisplay.textContent = decodeURIComponent(message);
-                messageDisplay.style.display = 'block';
-                if (status === 'success') {
-                    messageDisplay.classList.add('exito');
-                    messageDisplay.classList.remove('error');
-                } else if (status === 'error') {
-                    messageDisplay.classList.add('error');
-                    messageDisplay.classList.remove('exito');
-                }
-
-                // Ocultar el mensaje después de 5 segundos
-                setTimeout(() => {
-                    messageDisplay.style.display = 'none';
-                    messageDisplay.classList.remove('exito', 'error');
-                    // Limpiar los parámetros de la URL para que el mensaje no reaparezca al recargar
-                    history.replaceState(null, document.title, window.location.pathname);
-                }, 5000);
-            }
-        });
     </script>
 </body>
 </html>
