@@ -13,6 +13,7 @@ FROM ventas v
 LEFT JOIN clientes c ON v.id_cliente = c.id 
 LEFT JOIN detalle_ventas dv ON v.id = dv.venta_id
 LEFT JOIN productos p ON dv.producto_id = p.id
+WHERE MONTH(v.fecha_venta) = MONTH(CURRENT_DATE()) AND YEAR(v.fecha_venta) = YEAR(CURRENT_DATE())
 GROUP BY v.id
 ORDER BY v.fecha_venta DESC";
 $resultado = $conexion->query($sql);
@@ -274,32 +275,31 @@ if (!$resultado) {
             max-width: 800px !important;
         }
 
-        .meses-container {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
+        .selectores-container {
             margin-bottom: 20px;
+            text-align: center;
         }
 
-        .btn-mes {
-            padding: 10px;
+        .selector-fecha {
+            padding: 10px 20px;
             border: 1px solid #E1B8E2;
-            background-color: white;
-            color: #333;
             border-radius: 4px;
+            font-size: 16px;
+            color: #333;
+            background-color: white;
             cursor: pointer;
+            min-width: 200px;
             transition: all 0.3s ease;
         }
 
-        .btn-mes:hover {
-            background-color: #E1B8E2;
-            color: #000;
+        .selector-fecha:hover {
+            border-color: #d4a7d5;
         }
 
-        .btn-mes.active {
-            background-color: #E1B8E2;
-            color: #000;
-            font-weight: bold;
+        .selector-fecha:focus {
+            outline: none;
+            border-color: #E1B8E2;
+            box-shadow: 0 0 0 2px rgba(225, 184, 226, 0.25);
         }
 
         .resumen-ventas {
@@ -769,6 +769,163 @@ if (!$resultado) {
         .btn-agregar:hover {
             background-color: #d4a7d5;
         }
+
+        /* Estilos para las pestañas */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            padding: 10px 20px;
+            border: 1px solid #E1B8E2;
+            background-color: white;
+            color: #333;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn:hover {
+            background-color: #E1B8E2;
+            color: #000;
+        }
+
+        .tab-btn.active {
+            background-color: #E1B8E2;
+            color: #000;
+            font-weight: bold;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Estilos para los botones de año */
+        .años-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .btn-año {
+            padding: 10px 20px;
+            border: 1px solid #E1B8E2;
+            background-color: white;
+            color: #333;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-año:hover {
+            background-color: #E1B8E2;
+            color: #000;
+        }
+
+        .btn-año.active {
+            background-color: #E1B8E2;
+            color: #000;
+            font-weight: bold;
+        }
+
+        /* Estilos para el selector de año */
+        .selector-anio-container {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .selector-fecha {
+            padding: 10px 20px;
+            border: 1px solid #E1B8E2;
+            border-radius: 4px;
+            font-size: 16px;
+            color: #333;
+            background-color: white;
+            cursor: pointer;
+            min-width: 200px;
+            transition: all 0.3s ease;
+        }
+
+        .selector-fecha:hover {
+            border-color: #d4a7d5;
+        }
+
+        .selector-fecha:focus {
+            outline: none;
+            border-color: #E1B8E2;
+            box-shadow: 0 0 0 2px rgba(225, 184, 226, 0.25);
+        }
+
+        /* Estilos para los botones de mes en la vista anual */
+        .meses-container-anual {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .btn-mes-anual {
+            padding: 10px;
+            border: 1px solid #E1B8E2;
+            background-color: white;
+            color: #333;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-mes-anual:hover {
+            background-color: #E1B8E2;
+            color: #000;
+        }
+
+        .btn-mes-anual.active {
+            background-color: #E1B8E2;
+            color: #000;
+            font-weight: bold;
+        }
+
+        .meses-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 0 20px;
+        }
+
+        .btn-mes {
+            padding: 12px 15px;
+            border: 1px solid #E1B8E2;
+            border-radius: 4px;
+            background-color: white;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            text-align: center;
+            min-width: 100px;
+        }
+
+        .btn-mes:hover {
+            background-color: #f8f0f8;
+            border-color: #d4a7d5;
+        }
+
+        .btn-mes.active {
+            background-color: #E1B8E2;
+            color: white;
+            border-color: #E1B8E2;
+        }
+
+        .btn-mes.active:hover {
+            background-color: #d4a7d5;
+        }
     </style>
 </head>
 <body>
@@ -969,25 +1126,36 @@ if (!$resultado) {
         </div>
     </div>
 
-    <!-- Modal de Ventas Mensuales -->
+    <!-- Modal de Ventas Anuales -->
     <div id="modalVentasMensuales" class="modal">
         <div class="modal-content modal-ventas-mensuales">
             <span class="close" onclick="cerrarModalVentasMensuales()">&times;</span>
-            <h2>Ventas Mensuales</h2>
+            <h2>Ventas Anuales</h2>
             
+            <div class="selector-anio-container">
+                <select id="select-anio" class="selector-fecha" onchange="cargarVentasMes(document.querySelector('.btn-mes.active').getAttribute('data-mes'))">
+                    <?php
+                    $añoActual = date('Y');
+                    for ($i = $añoActual; $i >= $añoActual - 4; $i--) {
+                        $selected = $i == $añoActual ? 'selected' : '';
+                        echo "<option value='$i' $selected>$i</option>";
+                    }
+                    ?>
+                </select>
+            </div>
+
             <div class="meses-container">
-                <button onclick="cargarVentasMes(1)" class="btn-mes">Enero</button>
-                <button onclick="cargarVentasMes(2)" class="btn-mes">Febrero</button>
-                <button onclick="cargarVentasMes(3)" class="btn-mes">Marzo</button>
-                <button onclick="cargarVentasMes(4)" class="btn-mes">Abril</button>
-                <button onclick="cargarVentasMes(5)" class="btn-mes">Mayo</button>
-                <button onclick="cargarVentasMes(6)" class="btn-mes">Junio</button>
-                <button onclick="cargarVentasMes(7)" class="btn-mes">Julio</button>
-                <button onclick="cargarVentasMes(8)" class="btn-mes">Agosto</button>
-                <button onclick="cargarVentasMes(9)" class="btn-mes">Septiembre</button>
-                <button onclick="cargarVentasMes(10)" class="btn-mes">Octubre</button>
-                <button onclick="cargarVentasMes(11)" class="btn-mes">Noviembre</button>
-                <button onclick="cargarVentasMes(12)" class="btn-mes">Diciembre</button>
+                <?php
+                $meses = [
+                    1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril',
+                    5 => 'Mayo', 6 => 'Junio', 7 => 'Julio', 8 => 'Agosto',
+                    9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre'
+                ];
+                foreach ($meses as $num => $nombre) {
+                    $clase = $num == date('n') ? 'active' : '';
+                    echo "<button class='btn-mes $clase' data-mes='$num' onclick='cargarVentasMes($num)'>$nombre</button>";
+                }
+                ?>
             </div>
 
             <div class="resumen-ventas">
@@ -1438,9 +1606,8 @@ if (!$resultado) {
         // Funciones para el modal de ventas mensuales
         function abrirModalVentasMensuales() {
             document.getElementById('modalVentasMensuales').style.display = 'block';
-            // Cargar el mes actual por defecto
-            const mesActual = new Date().getMonth() + 1;
-            cargarVentasMes(mesActual);
+            // Cargar ventas del mes actual
+            cargarVentasMes(new Date().getMonth() + 1);
         }
 
         function cerrarModalVentasMensuales() {
@@ -1448,13 +1615,13 @@ if (!$resultado) {
         }
 
         function cargarVentasMes(mes) {
-            // Actualizar botón activo
-            const botones = document.querySelectorAll('.btn-mes');
-            botones.forEach(btn => btn.classList.remove('active'));
-            botones[mes - 1].classList.add('active');
-
-            // Obtener el año actual
-            const año = new Date().getFullYear();
+            const año = document.getElementById('select-anio').value;
+            
+            // Actualizar botones activos
+            document.querySelectorAll('.btn-mes').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
 
             // Realizar la petición al servidor
             fetch(`../controllers/ventas/obtener_ventas_mes.php?mes=${mes}&año=${año}`)
@@ -1498,13 +1665,12 @@ if (!$resultado) {
                 });
         }
 
-        // Cerrar modal de ventas mensuales al hacer clic fuera
+        // Cerrar modal al hacer clic fuera
         window.onclick = function(event) {
             var modalVentasMensuales = document.getElementById('modalVentasMensuales');
             if (event.target == modalVentasMensuales) {
                 cerrarModalVentasMensuales();
             }
-            // ... existing modal close code ...
         }
 
         function abrirModalGuia(idCliente) {
@@ -1731,6 +1897,120 @@ if (!$resultado) {
                 mensajeError.style.display = 'block';
             });
         });
+
+        function cambiarTab(tab) {
+            // Actualizar botones de pestaña
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Mostrar contenido correspondiente
+            document.getElementById('contenido-mensual').style.display = tab === 'mensual' ? 'block' : 'none';
+            document.getElementById('contenido-anual').style.display = tab === 'anual' ? 'block' : 'none';
+
+            // Cargar datos iniciales
+            if (tab === 'mensual') {
+                cargarVentasMes(new Date().getMonth() + 1);
+            } else {
+                // Cargar el mes actual del año seleccionado
+                cargarVentasMesAnio(new Date().getMonth() + 1);
+            }
+        }
+
+        function cargarVentasAnio(año) {
+            // Realizar la petición al servidor
+            fetch(`../controllers/ventas/obtener_ventas_anio.php?año=${año}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Actualizar resumen
+                        document.getElementById('total-ventas-anio').textContent =
+                            `$${parseFloat(data.total_ventas).toFixed(2)}`;
+                        document.getElementById('cantidad-ventas-anio').textContent =
+                            data.cantidad_ventas;
+
+                        // Actualizar tabla
+                        const tbody = document.getElementById('tabla-ventas-anuales');
+                        tbody.innerHTML = '';
+
+                        data.ventas.forEach(venta => {
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `
+                                <td>${new Date(venta.fecha_venta).toLocaleString('es-ES', {
+                                    day: 'numeric',
+                                    month: 'numeric',
+                                    year: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    hour12: false
+                                })}</td>
+                                <td>${venta.productos}</td>
+                                <td>${venta.cantidad}</td>
+                                <td>-</td>
+                                <td>$${parseFloat(venta.total).toFixed(2)}</td>
+                            `;
+                            tbody.appendChild(tr);
+                        });
+                    } else {
+                        console.error('Error al cargar las ventas:', data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+
+        function cargarVentasMesAnio(mes) {
+            const año = document.getElementById('select-anio').value;
+            
+            // Actualizar botones activos
+            document.querySelectorAll('.btn-mes-anual').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Realizar la petición al servidor
+            fetch(`../controllers/ventas/obtener_ventas_mes.php?mes=${mes}&año=${año}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Actualizar resumen
+                        document.getElementById('total-ventas-anio').textContent =
+                            `$${parseFloat(data.total_ventas).toFixed(2)}`;
+                        document.getElementById('cantidad-ventas-anio').textContent =
+                            data.cantidad_ventas;
+
+                        // Actualizar tabla
+                        const tbody = document.getElementById('tabla-ventas-anuales');
+                        tbody.innerHTML = '';
+
+                        data.ventas.forEach(venta => {
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `
+                                <td>${new Date(venta.fecha_venta).toLocaleString('es-ES', {
+                                    day: 'numeric',
+                                    month: 'numeric',
+                                    year: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    hour12: false
+                                })}</td>
+                                <td>${venta.productos}</td>
+                                <td>${venta.cantidad}</td>
+                                <td>-</td>
+                                <td>$${parseFloat(venta.total).toFixed(2)}</td>
+                            `;
+                            tbody.appendChild(tr);
+                        });
+                    } else {
+                        console.error('Error al cargar las ventas:', data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
     </script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
