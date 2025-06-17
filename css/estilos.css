@@ -216,19 +216,17 @@ button {
     border: 1px solid #f5c6cb;
 }
 
-/* Estilos para el botón de agregar */
+/* Estilos base para botones de agregar */
 .btn-agregar-contenedor {
-   
-    justify-content: flex-end;
-    margin-bottom: 20px;
-    margin-right: 20px;
+    display: flex;
+    align-items: center;
 }
 
 .btn-agregar {
     background-color: #E1B8E2;
     color: white;
     border: none;
-    border-radius: 50%;
+    border-radius: 4px;
     width: 40px;
     height: 40px;
     font-size: 24px;
@@ -237,13 +235,45 @@ button {
     align-items: center;
     justify-content: center;
     transition: all 0.3s ease;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .btn-agregar:hover {
     background-color: #d4a7d5;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.btn-agregar .material-icons {
+    font-size: 24px;
+    color: white;
+}
+
+/* Estilo para botones de agregar con texto */
+.btn-agregar-texto {
+    background-color: #E1B8E2;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 10px 20px;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.btn-agregar-texto:hover {
+    background-color: #d4a7d5;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+}
+
+.btn-agregar-texto .material-icons {
+    font-size: 20px;
+    color: white;
 }
 
 /* Estilos para el Modal */

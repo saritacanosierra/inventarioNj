@@ -32,7 +32,9 @@ if (!$resultado) {
                     <input type="text" id="filtro-usuario" placeholder="Buscar usuario..." class="filtro-input">
                 </div>
                 <div class="btn-agregar-contenedor">
-                    <button onclick="abrirModalInsertar()" class="btn-agregar">+</button>
+                    <button onclick="abrirModalInsertar()" class="btn-agregar">
+                        <span class="material-icons">add</span>
+                    </button>
                 </div>
             </div>
             <div class="tabla-contenedor">
@@ -273,6 +275,124 @@ if (!$resultado) {
 
         .btn-eliminar:hover .material-icons {
             color: #d32f2f;
+        }
+
+        /* Estilos para el contenedor de la tabla con scroll */
+        .tabla-contenedor {
+            max-height: 70vh;
+            overflow-y: auto;
+            margin-top: 20px;
+            border: 1px solid #E1B8E2;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .tabla-contenedor table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+        }
+
+        .tabla-contenedor th {
+            position: sticky;
+            top: 0;
+            background-color: #E1B8E2;
+            color: white;
+            font-weight: 600;
+            padding: 15px;
+            text-align: left;
+            border-bottom: 2px solid #d4a7d5;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            z-index: 1;
+        }
+
+        .tabla-contenedor td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .tabla-contenedor tr:hover {
+            background-color: #f8f5f9;
+        }
+
+        /* Estilos para la barra de scroll */
+        .tabla-contenedor::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .tabla-contenedor::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .tabla-contenedor::-webkit-scrollbar-thumb {
+            background: #E1B8E2;
+            border-radius: 4px;
+        }
+
+        .tabla-contenedor::-webkit-scrollbar-thumb:hover {
+            background: #d4a7d5;
+        }
+
+        /* Estilos para el contenedor principal */
+        .contenido {
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin: 20px;
+        }
+
+        .contenido h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        /* Estilos para el filtro y botón de agregar */
+        .filtro-agregar-contenedor {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .filtro-input {
+            padding: 8px 12px;
+            border: 1px solid #E1B8E2;
+            border-radius: 4px;
+            width: 300px;
+            font-size: 14px;
+        }
+
+        .filtro-input:focus {
+            outline: none;
+            border-color: #d4a7d5;
+            box-shadow: 0 0 0 2px rgba(225, 184, 226, 0.2);
+        }
+
+        .btn-agregar {
+            background-color: #E1B8E2;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            width: 40px;
+            height: 40px;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .btn-agregar:hover {
+            background-color: #d4a7d5;
         }
     </style>
 

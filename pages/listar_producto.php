@@ -1,5 +1,6 @@
 <?php
-require '../conexion.php';
+require_once __DIR__ . '/../conexion.php';
+require_once __DIR__ . '/../controllers/verificar_sesion.php';
 
 $sql = "SELECT p.id, p.codigo, p.nombre, p.precio, p.stock, p.foto, p.id_categoria, c.nombre as categoria, c.codigo as codigo_categoria 
 FROM productos p 
@@ -322,7 +323,9 @@ if (!$resultado) {
                         <input type="text" id="filtro-producto" placeholder="Buscar producto..." class="filtro-input">
                     </div>
                     <div class="btn-agregar-contenedor">
-                        <button onclick="abrirModalInsertar()" class="btn-agregar">+</button>
+                        <button onclick="abrirModalInsertar()" class="btn-agregar">
+                            <span class="material-icons">add</span>
+                        </button>
                     </div>
                 </div>
 

@@ -1,5 +1,6 @@
 <?php
-require '../conexion.php';
+require_once __DIR__ . '/../conexion.php';
+require_once __DIR__ . '/../controllers/verificar_sesion.php';
 
 $sql = "SELECT v.id, v.fecha_venta, v.total, v.tipo_pago, v.estado, v.created_at,
        c.cedula as cedula_cliente, c.nombre as nombre_cliente,
@@ -173,6 +174,7 @@ if (!$resultado) {
             cursor: pointer;
             padding: 5px;
             transition: transform 0.2s ease;
+            color: white;
         }
 
         .btn-editar:hover,
@@ -597,17 +599,23 @@ if (!$resultado) {
             border: 1px solid #E1B8E2;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: relative;
         }
 
         .tabla-contenedor table {
             width: 100%;
             border-collapse: collapse;
             background-color: white;
+            table-layout: fixed;
+        }
+
+        .tabla-contenedor thead {
+            position: sticky;
+            top: 0;
+            z-index: 2;
         }
 
         .tabla-contenedor th {
-            position: sticky;
-            top: 0;
             background-color: #E1B8E2;
             color: white;
             font-weight: 600;
@@ -617,7 +625,18 @@ if (!$resultado) {
             font-size: 14px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            z-index: 1;
+        }
+
+        .tabla-contenedor tbody {
+            display: block;
+            overflow-y: auto;
+            max-height: calc(70vh - 50px);
+        }
+
+        .tabla-contenedor tr {
+            display: table;
+            width: 100%;
+            table-layout: fixed;
         }
 
         .tabla-contenedor td {
@@ -631,6 +650,7 @@ if (!$resultado) {
             background-color: #f8f5f9;
         }
 
+        /* Estilos para la barra de scroll */
         .tabla-contenedor::-webkit-scrollbar {
             width: 8px;
         }
@@ -669,8 +689,7 @@ if (!$resultado) {
         }
 
         .btn-editar {
-            background-color: #17a2b8;
-           
+            background-color: #2196F3;
         }
 
         .btn-guia {
@@ -679,7 +698,11 @@ if (!$resultado) {
         }
 
         .btn-eliminar {
-            background-color: #dc3545;
+            background-color: #f44336;
+            color: white;
+        }
+
+        .btn-eliminar .material-icons {
             color: white;
         }
 
@@ -689,7 +712,7 @@ if (!$resultado) {
         }
 
         .btn-editar:hover {
-            background-color: #138496;
+            background-color: #1976D2;
         }
 
         .btn-guia:hover {
@@ -697,7 +720,11 @@ if (!$resultado) {
         }
 
         .btn-eliminar:hover {
-            background-color: #c82333;
+            background-color: #d32f2f;
+        }
+
+        .btn-eliminar:hover .material-icons {
+            color: white;
         }
 
         .btn-factura:hover {
@@ -705,8 +732,20 @@ if (!$resultado) {
             color: white;
         }
 
-        .material-icons {
-            font-size: 18px;
+        .btn-editar .material-icons {
+            color: #2196F3;
+        }
+
+        .btn-eliminar .material-icons {
+            color:rgb(255, 255, 255);
+        }
+
+        .btn-editar:hover .material-icons {
+            color: #1976D2;
+        }
+
+        .btn-eliminar:hover .material-icons {
+            color: #d32f2f;
         }
 
         /* Estilos para el contenedor principal */
