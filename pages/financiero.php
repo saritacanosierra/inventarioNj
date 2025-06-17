@@ -1,6 +1,5 @@
 <?php
-require_once __DIR__ . '/../conexion.php';
-require_once __DIR__ . '/../controllers/verificar_sesion.php';
+require '../conexion.php';
 
 $sql = "SELECT * FROM financiera";
 $resultado = $conexion->query($sql);

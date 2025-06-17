@@ -252,13 +252,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <button type="submit">Registrarse</button>
 
                 <div class="registro-link">
-                    <p>¿Ya tienes cuenta? <a href="/inventarioNj/pages/login.php">Inicia sesión aquí</a></p>
+                    <p>¿Ya tienes cuenta? <a href="login.php">Inicia sesión aquí</a></p>
                 </div>
             </form>
         </div>
 
         <div class="login-derecha">
-            <img src="/inventarioNj/img/Frame 21.png" alt="Imagen de registro">
+            <img src="img/Frame 21.png" alt="Imagen de registro">
         </div>
     </div>
 
