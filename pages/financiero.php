@@ -40,42 +40,44 @@ $uploadDir = '../../uploads/productos/';
                     <button onclick="abrirModalInsertar()" class="btn-agregar">+</button>
                 </div>
             </div>
-            <div class="tabla-contenedor">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Código proveedor</th>
-                            <th>Nombre proveedor</th>
-                            <th>Fecha compra</th>
-                            <th>Valor compra</th>
-                            <th>Número teléfono</th>
-                            <th>Cantidad comprada</th>
-                            <th>Tipo de compra</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabla-financiera">
-                        <?php while ($registro = $resultado->fetch_assoc()): ?>
+            <div class="contenedor">
+                <div class="tabla-contenedor">
+                    <table>
+                        <thead>
                             <tr>
-                                <td><?php echo $registro['codigoProveedor']; ?></td>
-                                <td><?php echo $registro['nombreProveedor']; ?></td>
-                                <td><?php echo $registro['fechaCompra']; ?></td>
-                                <td><?php echo $registro['valorCompra']; ?></td>
-                                <td><?php echo $registro['numeroTelefono']; ?></td>
-                                <td><?php echo $registro['cantidadComprada']; ?></td>
-                                <td><?php echo $registro['tipoCompra']; ?></td>
-                                <td class="acciones">
-                                    <button onclick="abrirModalEditar(<?php echo htmlspecialchars(json_encode($registro)); ?>)" class="btn-editar">
-                                        <span class="material-icons">edit</span>
-                                    </button>
-                                    <a href="../controllers/financiero/eliminar_financiero.php?id=<?php echo $registro['codigoProveedor']; ?>" class="btn-eliminar" onclick="return confirm('¿Estás seguro de eliminar este registro?')">
-                                        <span class="material-icons">delete</span>
-                                    </a>
-                                </td>
+                                <th>Código proveedor</th>
+                                <th>Nombre proveedor</th>
+                                <th>Fecha compra</th>
+                                <th>Valor compra</th>
+                                <th>Número teléfono</th>
+                                <th>Cantidad comprada</th>
+                                <th>Tipo de compra</th>
+                                <th>Acciones</th>
                             </tr>
-                        <?php endwhile; ?>
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody id="tabla-financiera">
+                            <?php while ($registro = $resultado->fetch_assoc()): ?>
+                                <tr>
+                                    <td><?php echo $registro['codigoProveedor']; ?></td>
+                                    <td><?php echo $registro['nombreProveedor']; ?></td>
+                                    <td><?php echo $registro['fechaCompra']; ?></td>
+                                    <td><?php echo $registro['valorCompra']; ?></td>
+                                    <td><?php echo $registro['numeroTelefono']; ?></td>
+                                    <td><?php echo $registro['cantidadComprada']; ?></td>
+                                    <td><?php echo $registro['tipoCompra']; ?></td>
+                                    <td class="acciones">
+                                        <button onclick="abrirModalEditar(<?php echo htmlspecialchars(json_encode($registro)); ?>)" class="btn-editar">
+                                            <span class="material-icons">edit</span>
+                                        </button>
+                                        <a href="../controllers/financiero/eliminar_financiero.php?id=<?php echo $registro['codigoProveedor']; ?>" class="btn-eliminar" onclick="return confirm('¿Estás seguro de eliminar este registro?')">
+                                            <span class="material-icons">delete</span>
+                                        </a>
+                                    </td>
+                                </tr>
+                            <?php endwhile; ?>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>

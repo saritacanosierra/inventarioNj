@@ -358,6 +358,71 @@ $resultado = $enviosManager->obtenerClientes();
             margin: 5px 0;
             color: #666;
         }
+
+        /* Estilos para el contenedor de la tabla con scroll */
+        .tabla-contenedor {
+            max-height: 70vh;
+            overflow-y: auto;
+            margin-top: 20px;
+            border: 1px solid #E1B8E2;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .tabla-contenedor table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+        }
+
+        .tabla-contenedor thead {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            background-color: #E1B8E2;
+        }
+
+        .tabla-contenedor th {
+            color: white;
+            font-weight: 600;
+            padding: 15px;
+            text-align: left;
+            border-bottom: 2px solid #d4a7d5;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .tabla-contenedor td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .tabla-contenedor tr:hover {
+            background-color: #f8f5f9;
+        }
+
+        /* Estilos para la barra de scroll */
+        .tabla-contenedor::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .tabla-contenedor::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .tabla-contenedor::-webkit-scrollbar-thumb {
+            background: #E1B8E2;
+            border-radius: 4px;
+        }
+
+        .tabla-contenedor::-webkit-scrollbar-thumb:hover {
+            background: #d4a7d5;
+        }
     </style>
 </head>
 <body>
