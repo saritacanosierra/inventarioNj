@@ -39,6 +39,9 @@ $pagina = isset($_GET['pagina']) ? $_GET['pagina'] : 'inicio';
                          AND tipoCompra = 'gasto'";
             
             $stmtGastos = $conexion->prepare($sqlGastos);
+            if ($stmtGastos === false) {
+                die("Error en la preparación de la consulta de gastos: " . $conexion->error);
+            }
             $stmtGastos->bind_param("ii", $mesActual, $añoActual);
             $stmtGastos->execute();
             $resultadoGastos = $stmtGastos->get_result();
@@ -52,6 +55,9 @@ $pagina = isset($_GET['pagina']) ? $_GET['pagina'] : 'inicio';
                               AND tipoCompra = 'inversion'";
             
             $stmtInversiones = $conexion->prepare($sqlInversiones);
+            if ($stmtInversiones === false) {
+                die("Error en la preparación de la consulta de inversiones: " . $conexion->error);
+            }
             $stmtInversiones->bind_param("ii", $mesActual, $añoActual);
             $stmtInversiones->execute();
             $resultadoInversiones = $stmtInversiones->get_result();
@@ -65,6 +71,9 @@ $pagina = isset($_GET['pagina']) ? $_GET['pagina'] : 'inicio';
                           AND tipoCompra = 'compra'";
             
             $stmtCompras = $conexion->prepare($sqlCompras);
+            if ($stmtCompras === false) {
+                die("Error en la preparación de la consulta de compras: " . $conexion->error);
+            }
             $stmtCompras->bind_param("ii", $mesActual, $añoActual);
             $stmtCompras->execute();
             $resultadoCompras = $stmtCompras->get_result();

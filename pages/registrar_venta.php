@@ -114,7 +114,7 @@ $clientes = $conexion->query($sql_clientes);
                                 </div>
                                 <div class="resumen-item">
                                     <div class="resumen-label">Subtotal</div>
-                                    <div class="resumen-value" id="subtotal">$0.00</div>
+                                    <div class="resumen-value" id="subtotal-venta">$0.00</div>
                                 </div>
                             </div>
 
@@ -129,16 +129,85 @@ $clientes = $conexion->query($sql_clientes);
                     <div class="columna-derecha">
                         <!-- Productos -->
                         <div class="productos-section">
-                            <h2><span class="material-icons" style="margin-right: 8px;">inventory</span>Productos de la Venta</h2>
-                            
-                            <div id="productos-container">
-                                <!-- Los productos se agregarán dinámicamente aquí -->
+                            <h2><span class="material-icons" style="margin-right: 8px;">inventory</span>Seleccionar Productos</h2>
+
+                            <div class="producto-seleccion-form">
+                                <div class="form-group">
+                                    <label for="select_categoria">Categoría:</label>
+                                    <select id="select_categoria" onchange="filtrarProductosPorCategoria()">
+                                        <option value="">Seleccione una categoría</option>
+                                        <?php
+                                        $categorias->data_seek(0);
+                                        while ($categoria = $categorias->fetch_assoc()):
+                                        ?>
+                                            <option value="<?= $categoria['id'] ?>">
+                                                <?= htmlspecialchars($categoria['nombre'] . ' (' . $categoria['codigo'] . ')') ?>
+                                            </option>
+                                        <?php endwhile; ?>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="select_producto">Producto:</label>
+                                    <select id="select_producto" onchange="actualizarPrecioSeleccion()">
+                                        <option value="">Seleccione un producto</option>
+                                        <?php
+                                        $productos->data_seek(0);
+                                        while ($producto = $productos->fetch_assoc()):
+                                        ?>
+                                            <option value="<?= $producto['id'] ?>"
+                                                    data-precio="<?= $producto['precio'] ?>"
+                                                    data-stock="<?= $producto['stock'] ?>"
+                                                    data-codigo="<?= $producto['codigo'] ?>"
+                                                    data-nombre="<?= $producto['nombre'] ?>"
+                                                    data-categoria="<?= $producto['id_categoria'] ?>">
+                                                <?= htmlspecialchars($producto['codigo'] . ' - ' . $producto['nombre'] . ' (Stock: ' . $producto['stock'] . ')') ?>
+                                            </option>
+                                        <?php endwhile; ?>
+                                    </select>
+                                    <div class="producto-info-seleccion" id="info_producto_seleccion"></div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="input_cantidad">Cantidad:</label>
+                                    <input type="number" id="input_cantidad" min="1" oninput="calcularSubtotalSeleccion()">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="input_precio_unitario">Precio Unitario:</label>
+                                    <input type="number" id="input_precio_unitario" step="0.01" readonly>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="input_subtotal_seleccion">Subtotal:</label>
+                                    <input type="number" id="input_subtotal_seleccion" step="0.01" readonly>
+                                </div>
+
+                                <button type="button" class="btn-add-producto" onclick="agregarProductoATabla()">
+                                    <span class="material-icons">add_shopping_cart</span>
+                                    Agregar a la Venta
+                                </button>
                             </div>
 
-                            <button type="button" class="btn-add-producto" onclick="agregarProducto()">
-                                <span class="material-icons">add</span>
-                                Agregar Producto
-                            </button>
+                            <div class="tabla-productos-venta-contenedor">
+                                <h3>Productos Agregados a la Venta</h3>
+                                <table class="tabla-productos-venta">
+                                    <thead>
+                                        <tr>
+                                            <th>Código</th>
+                                            <th>Producto</th>
+                                            <th>Cantidad</th>
+                                            <th>Precio Unit.</th>
+                                            <th>Subtotal</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="productos-agregados-table-body">
+                                        <!-- Productos agregados dinámicamente aquí -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            <input type="hidden" name="productos_venta_json" id="productos-venta-json">
                         </div>
 
                         <!-- Acciones -->
@@ -147,7 +216,7 @@ $clientes = $conexion->query($sql_clientes);
                                 <span class="material-icons" style="margin-right: 5px;">arrow_back</span>
                                 Volver a Ventas
                             </a>
-                            
+
                             <button type="submit" class="btn-primary" id="btn-guardar" disabled>
                                 <span class="material-icons" style="margin-right: 5px;">save</span>
                                 Guardar Venta
@@ -191,276 +260,307 @@ $clientes = $conexion->query($sql_clientes);
     </div>
 
     <script>
-        // Datos de categorías disponibles
+        // Datos de categorías disponibles (PHP fetched)
         const categorias = [
-            <?php 
+            <?php
             $categorias->data_seek(0);
             $categoriasArray = [];
             while ($categoria = $categorias->fetch_assoc()) {
-                $categoriasArray[] = "{
-                    id: {$categoria['id']},
-                    codigo: '" . addslashes($categoria['codigo']) . "',
-                    nombre: '" . addslashes($categoria['nombre']) . "'
-                }";
+                $categoriasArray[] = "{ id: {$categoria['id']}, codigo: '" . addslashes($categoria['codigo']) . "', nombre: '" . addslashes($categoria['nombre']) . "' }";
             }
             echo implode(",\n", $categoriasArray);
             ?>
         ];
 
-        // Datos de productos disponibles
+        // Datos de productos disponibles (PHP fetched)
         const productos = [
-            <?php 
+            <?php
             $productos->data_seek(0);
             $productosArray = [];
             while ($producto = $productos->fetch_assoc()) {
-                $productosArray[] = "{
-                    id: {$producto['id']},
-                    codigo: '" . addslashes($producto['codigo']) . "',
-                    nombre: '" . addslashes($producto['nombre']) . "',
-                    precio: {$producto['precio']},
-                    stock: {$producto['stock']},
-                    categoria_id: " . ($producto['id_categoria'] ?: 'null') . ",
-                    categoria: '" . addslashes($producto['categoria_nombre'] ?? 'Sin categoría') . "'
-                }";
+                $productosArray[] = "{ id: {$producto['id']}, codigo: '" . addslashes($producto['codigo']) . "', nombre: '" . addslashes($producto['nombre']) . "', precio: {$producto['precio']}, stock: {$producto['stock']}, categoria_id: " . ($producto['id_categoria'] ?: 'null') . ", categoria: '" . addslashes($producto['categoria_nombre'] ?? 'Sin categoría') . "' }";
             }
             echo implode(",\n", $productosArray);
             ?>
         ];
 
-        let productosAgregados = [];
-        let contadorProductos = 0;
+        let productosAgregados = []; // Array para almacenar los productos de la venta
 
         // Establecer fecha actual
         document.getElementById('fecha_venta').value = new Date().toISOString().slice(0, 16);
 
-        function agregarProducto() {
-            contadorProductos++;
-            const productoId = `producto_${contadorProductos}`;
-            
-            const productoHTML = `
-                <div class="producto-item" id="${productoId}">
-                    <div class="producto-header">
-                        <div class="producto-title">Producto ${contadorProductos}</div>
-                        <button type="button" class="btn-remove-producto" onclick="removerProducto('${productoId}')">
-                            <span class="material-icons">delete</span>
-                        </button>
-                    </div>
-                    <div class="producto-fields">
-                        <div class="form-group">
-                            <label for="filtro_categoria_${contadorProductos}">Categoría:</label>
-                            <select id="filtro_categoria_${contadorProductos}" onchange="filtrarProductosPorCategoria(${contadorProductos})" style="margin-bottom: 10px;">
-                                <option value="">Todas las categorías</option>
-                                ${categorias.map(c => `
-                                    <option value="${c.id}">
-                                        ${c.nombre} (${c.codigo})
-                                    </option>
-                                `).join('')}
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="producto_${contadorProductos}">Producto:</label>
-                            <select id="select_${contadorProductos}" name="productos[${contadorProductos}][id_producto]" required onchange="actualizarPrecio(${contadorProductos})">
-                                <option value="">Seleccione un producto</option>
-                                ${productos.map(p => `
-                                    <option value="${p.id}" data-precio="${p.precio}" data-stock="${p.stock}" data-categoria="${p.categoria_id || ''}">
-                                        ${p.codigo} - ${p.nombre} (Stock: ${p.stock})
-                                    </option>
-                                `).join('')}
-                            </select>
-                            <div class="producto-info" id="info_${contadorProductos}"></div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="cantidad_${contadorProductos}">Cantidad:</label>
-                            <input type="number" id="cantidad_${contadorProductos}" name="productos[${contadorProductos}][cantidad]" min="1" required onchange="calcularSubtotal(${contadorProductos})" oninput="calcularSubtotal(${contadorProductos})">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="precio_${contadorProductos}">Precio Unitario:</label>
-                            <input type="number" id="precio_${contadorProductos}" name="productos[${contadorProductos}][precio_unitario]" step="0.01" readonly style="background-color: #e9ecef; font-weight: bold;">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="subtotal_${contadorProductos}">Subtotal:</label>
-                            <input type="number" id="subtotal_${contadorProductos}" name="productos[${contadorProductos}][subtotal]" step="0.01" readonly style="background-color: #e9ecef; font-weight: bold;">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>&nbsp;</label>
-                            <input type="hidden" id="stock_disponible_${contadorProductos}" value="0">
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            document.getElementById('productos-container').insertAdjacentHTML('beforeend', productoHTML);
-            productosAgregados.push(productoId);
-            actualizarResumen();
+        function filtrarProductosPorCategoria() {
+            const categoriaId = document.getElementById('select_categoria').value;
+            const selectProducto = document.getElementById('select_producto');
+            const options = selectProducto.getElementsByTagName('option');
+
+            // Resetear el select de productos y campos relacionados
+            selectProducto.value = '';
+            document.getElementById('input_precio_unitario').value = '';
+            document.getElementById('input_cantidad').value = '';
+            document.getElementById('input_subtotal_seleccion').value = '';
+            document.getElementById('info_producto_seleccion').innerHTML = '';
+
+            // Mostrar/ocultar productos según la categoría seleccionada
+            for (let option of options) {
+                if (option.value === '') {
+                    option.style.display = ''; // Siempre mostrar la opción por defecto
+                } else {
+                    const categoriaProducto = option.getAttribute('data-categoria');
+                    option.style.display = categoriaId === '' || categoriaId === categoriaProducto ? '' : 'none';
+                }
+            }
         }
 
-        function removerProducto(productoId) {
-            const elemento = document.getElementById(productoId);
-            elemento.remove();
-            productosAgregados = productosAgregados.filter(id => id !== productoId);
-            actualizarResumen();
-        }
+        function actualizarPrecioSeleccion() {
+            const select = document.getElementById('select_producto');
+            const option = select.options[select.selectedIndex];
+            const precioInput = document.getElementById('input_precio_unitario');
+            const cantidadInput = document.getElementById('input_cantidad');
+            const subtotalInput = document.getElementById('input_subtotal_seleccion');
+            const infoDiv = document.getElementById('info_producto_seleccion');
 
-        function actualizarPrecio(numero) {
-            const select = document.getElementById(`select_${numero}`);
-            const precioInput = document.getElementById(`precio_${numero}`);
-            const infoDiv = document.getElementById(`info_${numero}`);
-            const stockInput = document.getElementById(`stock_disponible_${numero}`);
-            
-            console.log(`Actualizando precio para producto ${numero}`);
-            
             if (select.value) {
                 const producto = productos.find(p => p.id == select.value);
                 if (producto) {
-                    console.log(`Producto encontrado:`, producto);
                     precioInput.value = producto.precio.toFixed(2);
-                    stockInput.value = producto.stock;
-                    
+                    cantidadInput.max = producto.stock;
+                    cantidadInput.value = ''; // Limpiar cantidad al cambiar producto
+                    subtotalInput.value = ''; // Limpiar subtotal
+
                     let stockClass = 'stock-disponible';
-                    if (producto.stock <= 5) {
+                    if (producto.stock <= 5 && producto.stock > 0) {
                         stockClass = 'stock-bajo';
-                    }
-                    if (producto.stock == 0) {
+                    } else if (producto.stock === 0) {
                         stockClass = 'sin-stock';
                     }
-                    
+
                     infoDiv.innerHTML = `
                         <span class="${stockClass}">Stock disponible: ${producto.stock}</span><br>
                         <span>Categoría: ${producto.categoria}</span>
                     `;
-                    
-                    console.log(`Precio establecido: ${precioInput.value}`);
-                    calcularSubtotal(numero);
                 }
             } else {
                 precioInput.value = '';
+                cantidadInput.max = '';
+                cantidadInput.value = '';
+                subtotalInput.value = '';
                 infoDiv.innerHTML = '';
-                stockInput.value = '0';
-                console.log(`Producto no seleccionado, limpiando campos`);
             }
         }
 
-        function calcularSubtotal(numero) {
-            const cantidad = parseFloat(document.getElementById(`cantidad_${numero}`).value) || 0;
-            const precio = parseFloat(document.getElementById(`precio_${numero}`).value) || 0;
-            const subtotal = cantidad * precio;
-            
-            console.log(`Calculando subtotal para producto ${numero}:`, { cantidad, precio, subtotal });
-            
-            document.getElementById(`subtotal_${numero}`).value = subtotal.toFixed(2);
-            console.log(`Subtotal establecido: ${subtotal.toFixed(2)}`);
-            
-            actualizarResumen();
+        function calcularSubtotalSeleccion() {
+            const cantidad = parseFloat(document.getElementById('input_cantidad').value) || 0;
+            const precioUnitario = parseFloat(document.getElementById('input_precio_unitario').value) || 0;
+            const subtotalInput = document.getElementById('input_subtotal_seleccion');
+
+            if (cantidad && precioUnitario) {
+                const subtotal = (cantidad * precioUnitario).toFixed(2);
+                subtotalInput.value = subtotal;
+            } else {
+                subtotalInput.value = '';
+            }
         }
 
-        function actualizarResumen() {
-            let cantidadProductos = productosAgregados.length;
-            let totalUnidades = 0;
-            let subtotal = 0;
-            
-            productosAgregados.forEach(productoId => {
-                const numero = productoId.split('_')[1];
-                const cantidad = parseFloat(document.getElementById(`cantidad_${numero}`).value) || 0;
-                const subtotalProducto = parseFloat(document.getElementById(`subtotal_${numero}`).value) || 0;
-                
-                totalUnidades += cantidad;
-                subtotal += subtotalProducto;
-            });
-            
-            document.getElementById('cantidad-productos').textContent = cantidadProductos;
-            document.getElementById('total-unidades').textContent = totalUnidades;
-            document.getElementById('subtotal').textContent = `$${subtotal.toFixed(2)}`;
-            document.getElementById('total-general').textContent = `$${subtotal.toFixed(2)}`;
-            
-            // Habilitar/deshabilitar botón de guardar
-            const btnGuardar = document.getElementById('btn-guardar');
-            btnGuardar.disabled = cantidadProductos === 0 || subtotal === 0;
-        }
+        function agregarProductoATabla() {
+            const selectProducto = document.getElementById('select_producto');
+            const inputCantidad = document.getElementById('input_cantidad');
+            const inputPrecioUnitario = document.getElementById('input_precio_unitario');
+            const inputSubtotal = document.getElementById('input_subtotal_seleccion');
+            const mensajeError = document.getElementById('mensaje');
 
-        // Validación del formulario
-        document.getElementById('formVenta').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            if (productosAgregados.length === 0) {
-                mostrarMensaje('Debe agregar al menos un producto', 'error');
+            mensajeError.style.display = 'none';
+
+            if (!selectProducto.value || !inputCantidad.value || !inputPrecioUnitario.value || !inputSubtotal.value) {
+                mensajeError.textContent = 'Por favor, complete todos los campos del producto.';
+                mensajeError.style.display = 'block';
                 return;
             }
-            
-            // Validar que todos los productos tengan datos válidos
-            let valido = true;
-            productosAgregados.forEach(productoId => {
-                const numero = productoId.split('_')[1];
-                const producto = document.getElementById(`select_${numero}`).value;
-                const cantidad = document.getElementById(`cantidad_${numero}`).value;
-                const stockDisponible = parseInt(document.getElementById(`stock_disponible_${numero}`).value);
-                
-                if (!producto || !cantidad || cantidad <= 0) {
-                    valido = false;
-                }
-                
-                if (parseInt(cantidad) > stockDisponible) {
-                    mostrarMensaje(`La cantidad del producto ${numero} excede el stock disponible`, 'error');
-                    valido = false;
-                }
-            });
-            
-            if (valido) {
-                this.submit();
+
+            const productoId = selectProducto.value;
+            const cantidad = parseInt(inputCantidad.value);
+            const precioUnitario = parseFloat(inputPrecioUnitario.value);
+            const subtotal = parseFloat(inputSubtotal.value);
+
+            const productoExistenteIndex = productosAgregados.findIndex(p => p.id == productoId);
+            const productoOriginal = productos.find(p => p.id == productoId);
+
+            if (!productoOriginal) {
+                mensajeError.textContent = 'Producto no válido.';
+                mensajeError.style.display = 'block';
+                return;
             }
+
+            if (cantidad > productoOriginal.stock) {
+                mensajeError.textContent = `La cantidad (${cantidad}) excede el stock disponible (${productoOriginal.stock}) para ${productoOriginal.nombre}.`;
+                mensajeError.style.display = 'block';
+                return;
+            }
+
+            if (productoExistenteIndex > -1) {
+                // Actualizar cantidad y subtotal si el producto ya está en la tabla
+                const productoEnTabla = productosAgregados[productoExistenteIndex];
+                const nuevaCantidad = productoEnTabla.cantidad + cantidad;
+
+                if (nuevaCantidad > productoOriginal.stock) {
+                    mensajeError.textContent = `La cantidad total (${nuevaCantidad}) excede el stock disponible (${productoOriginal.stock}) para ${productoOriginal.nombre}.`;
+                    mensajeError.style.display = 'block';
+                    return;
+                }
+
+                productoEnTabla.cantidad = nuevaCantidad;
+                productoEnTabla.subtotal = (nuevaCantidad * productoEnTabla.precio_unitario).toFixed(2);
+            } else {
+                // Agregar nuevo producto
+                productosAgregados.push({
+                    id: productoId,
+                    codigo: productoOriginal.codigo,
+                    nombre: productoOriginal.nombre,
+                    cantidad: cantidad,
+                    precio_unitario: precioUnitario,
+                    subtotal: subtotal
+                });
+            }
+
+            renderizarTablaProductos();
+            calcularTotales();
+
+            // Limpiar formulario de selección
+            document.getElementById('select_categoria').value = '';
+            selectProducto.value = '';
+            inputCantidad.value = '';
+            inputPrecioUnitario.value = '';
+            inputSubtotal.value = '';
+            document.getElementById('info_producto_seleccion').innerHTML = '';
+            // Restablecer opciones de producto para que se muestren todas
+            filtrarProductosPorCategoria();
+        }
+
+        function renderizarTablaProductos() {
+            const tbody = document.getElementById('productos-agregados-table-body');
+            tbody.innerHTML = ''; // Limpiar tabla
+
+            productosAgregados.forEach((producto, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${htmlspecialchars(producto.codigo)}</td>
+                    <td>${htmlspecialchars(producto.nombre)}</td>
+                    <td>${producto.cantidad}</td>
+                    <td>$${parseFloat(producto.precio_unitario).toFixed(2)}</td>
+                    <td>$${parseFloat(producto.subtotal).toFixed(2)}</td>
+                    <td>
+                        <button type="button" class="btn-eliminar-producto-tabla" onclick="eliminarProductoDeTabla(${index})">
+                            <span class="material-icons">remove_circle</span>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function eliminarProductoDeTabla(index) {
+            productosAgregados.splice(index, 1); // Eliminar del array
+            renderizarTablaProductos(); // Volver a renderizar la tabla
+            calcularTotales(); // Recalcular totales
+        }
+
+        function calcularTotales() {
+            let cantidadProductos = productosAgregados.length;
+            let totalUnidades = 0;
+            let subtotalVenta = 0;
+
+            productosAgregados.forEach(producto => {
+                totalUnidades += producto.cantidad;
+                subtotalVenta += parseFloat(producto.subtotal);
+            });
+
+            document.getElementById('cantidad-productos').textContent = cantidadProductos;
+            document.getElementById('total-unidades').textContent = totalUnidades;
+            document.getElementById('subtotal-venta').textContent = `$${subtotalVenta.toFixed(2)}`;
+            document.getElementById('total-general').textContent = `$${subtotalVenta.toFixed(2)}`;
+
+            // Habilitar/deshabilitar botón de guardar
+            document.getElementById('btn-guardar').disabled = cantidadProductos === 0;
+
+            // Actualizar el campo JSON oculto para el envío
+            document.getElementById('productos-venta-json').value = JSON.stringify(productosAgregados);
+        }
+
+        // Manejar envío del formulario principal
+        document.getElementById('formVenta').addEventListener('submit', function(e) {
+            e.preventDefault(); // Evitar el envío tradicional del formulario
+
+            // Asegurarse de que el JSON de productos esté actualizado
+            calcularTotales();
+
+            if (productosAgregados.length === 0) {
+                const mensajeError = document.getElementById('mensaje');
+                mensajeError.textContent = 'Debe agregar al menos un producto a la venta para guardar.';
+                mensajeError.className = 'mensaje error';
+                mensajeError.style.display = 'block';
+                return;
+            }
+
+            const formData = new FormData(this);
+
+            // Agregar el JSON de productos al formData para enviar
+            formData.append('productos_venta_json', document.getElementById('productos-venta-json').value);
+
+            // Deshabilitar botón de guardar y mostrar mensaje de proceso
+            const btnGuardar = document.getElementById('btn-guardar');
+            const originalBtnText = btnGuardar.innerHTML;
+            btnGuardar.disabled = true;
+            btnGuardar.innerHTML = '<span class="material-icons">hourglass_empty</span> Guardando...';
+
+            fetch(this.action, { // Usar la acción del formulario como URL
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const mensajeExito = document.getElementById('mensaje');
+                    mensajeExito.textContent = data.message || 'Venta guardada exitosamente!';
+                    mensajeExito.className = 'mensaje exito';
+                    mensajeExito.style.display = 'block';
+
+                    // Limpiar el formulario y la tabla de productos después de un éxito
+                    document.getElementById('formVenta').reset();
+                    productosAgregados = [];
+                    renderizarTablaProductos();
+                    calcularTotales(); // Resetear totales y deshabilitar botón
+
+                    // Redirigir a la vista de ventas después de un breve retraso
+                    setTimeout(() => {
+                        const status = data.success ? 'success' : 'error';
+                        const message = encodeURIComponent(data.message || 'Venta guardada exitosamente!');
+                        window.location.href = `ventas.php?status=${status}&message=${message}`;
+                    }, 2000); // 2 segundos de espera
+
+                } else {
+                    const mensajeError = document.getElementById('mensaje');
+                    mensajeError.textContent = data.message || 'Error al guardar la venta.';
+                    mensajeError.className = 'mensaje error';
+                    mensajeError.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                const mensajeError = document.getElementById('mensaje');
+                mensajeError.textContent = 'Error de conexión o servidor. Por favor, intente de nuevo.';
+                mensajeError.className = 'mensaje error';
+                mensajeError.style.display = 'block';
+            })
+            .finally(() => {
+                btnGuardar.disabled = false;
+                btnGuardar.innerHTML = originalBtnText;
+            });
         });
 
-        function mostrarMensaje(mensaje, tipo) {
-            const mensajeDiv = document.getElementById('mensaje');
-            mensajeDiv.textContent = mensaje;
-            mensajeDiv.className = `mensaje ${tipo}`;
-            mensajeDiv.style.display = 'block';
-            
-            setTimeout(() => {
-                mensajeDiv.style.display = 'none';
-            }, 5000);
-        }
-
-        // Agregar primer producto automáticamente
-        window.onload = function() {
-            agregarProducto();
-        };
-
-        // Función para filtrar productos por categoría (individual por producto)
-        function filtrarProductosPorCategoria(numero) {
-            const categoriaSeleccionada = document.getElementById(`filtro_categoria_${numero}`).value;
-            const select = document.getElementById(`select_${numero}`);
-            
-            if (select) {
-                const options = select.getElementsByTagName('option');
-                
-                for (let option of options) {
-                    if (option.value === '') {
-                        option.style.display = ''; // Siempre mostrar la opción por defecto
-                    } else {
-                        const categoriaProducto = option.getAttribute('data-categoria') || '';
-                        option.style.display = categoriaSeleccionada === '' || categoriaSeleccionada === categoriaProducto ? '' : 'none';
-                    }
-                }
-                
-                // Si el producto seleccionado no está en la categoría filtrada, limpiar la selección
-                if (select.value && select.value !== '') {
-                    const productoSeleccionado = productos.find(p => p.id == select.value);
-                    if (productoSeleccionado && categoriaSeleccionada !== '' && productoSeleccionado.categoria_id != categoriaSeleccionada) {
-                        select.value = '';
-                        actualizarPrecio(numero);
-                    }
-                }
-            }
-        }
-
-        // Funciones del modal para insertar cliente
+        // Funciones del modal para insertar cliente (EXISTING CODE)
         function abrirModalInsertarCliente() {
             document.getElementById('modalInsertarCliente').style.display = 'block';
+            document.getElementById('mensaje-error-insertar-cliente').style.display = 'none';
         }
 
         function cerrarModalInsertarCliente() {
@@ -469,77 +569,60 @@ $clientes = $conexion->query($sql_clientes);
             document.getElementById('mensaje-error-insertar-cliente').style.display = 'none';
         }
 
-        // Manejo del formulario de insertar cliente
         document.getElementById('formInsertarCliente').addEventListener('submit', function(e) {
             e.preventDefault();
-            
+
             const formData = new FormData(this);
             const mensajeError = document.getElementById('mensaje-error-insertar-cliente');
             mensajeError.style.display = 'none';
-            
-            // Mostrar indicador de carga
-            const btnGuardar = this.querySelector('.btn-guardar');
-            const textoOriginal = btnGuardar.textContent;
-            btnGuardar.textContent = 'Guardando...';
-            btnGuardar.disabled = true;
-            
-            console.log('Enviando solicitud a:', '../controllers/clientes/insertar_cliente_venta.php');
+
             fetch('../controllers/clientes/insertar_cliente_venta.php', {
                 method: 'POST',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                credentials: 'same-origin',
                 body: formData
             })
             .then(response => {
-                console.log('Response status:', response.status);
-                console.log('Response URL:', response.url);
-                return response.text();
+                console.log('Respuesta del servidor (cliente):', response.status);
+                if (!response.ok) {
+                    throw new Error('Error de conexión: ' + response.status);
+                }
+                return response.json();
             })
-            .then(text => {
-                console.log('Response text:', text);
-                try {
-                    const data = JSON.parse(text);
-                    if (data.success) {
-                        // Agregar el nuevo cliente al select
-                        const select = document.getElementById('id_cliente');
-                        const option = document.createElement('option');
-                        option.value = data.cliente_id;
-                        option.text = `${data.nombre} - ${data.cedula}`;
-                        select.add(option);
-                        select.value = data.cliente_id;
-                        
-                        cerrarModalInsertarCliente();
-                        mostrarMensaje('Cliente agregado exitosamente', 'success');
-                    } else {
-                        mensajeError.textContent = data.message;
-                        mensajeError.style.display = 'block';
-                    }
-                } catch (e) {
-                    console.error('Error parsing JSON:', e);
-                    throw new Error('Respuesta no válida del servidor: ' + text);
+            .then(data => {
+                console.log('Datos recibidos (cliente):', data);
+                if (data.success) {
+                    cerrarModalInsertarCliente();
+                    alert('Cliente agregado exitosamente');
+                    console.log('Cliente creado con ID:', data.cliente_id);
+                    // Aquí podrías actualizar la lista de clientes si es necesario
+                    location.reload(); // Recargar para actualizar el select de clientes
+                } else {
+                    mensajeError.textContent = data.message;
+                    mensajeError.style.display = 'block';
                 }
             })
             .catch(error => {
-                console.error('Error completo:', error);
+                console.error('Error:', error);
                 mensajeError.textContent = 'Error de conexión: ' + error.message;
                 mensajeError.style.display = 'block';
-            })
-            .finally(() => {
-                // Restaurar botón
-                btnGuardar.textContent = textoOriginal;
-                btnGuardar.disabled = false;
             });
         });
 
-        // Cerrar modal al hacer clic fuera de él
-        window.onclick = function(event) {
-            const modal = document.getElementById('modalInsertarCliente');
-            if (event.target == modal) {
-                cerrarModalInsertarCliente();
-            }
+        // Helper para escapar HTML, útil para los nombres de productos en la tabla
+        function htmlspecialchars(str) {
+            var map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return str.replace(/[&<>"']/g, function(m) { return map[m]; });
         }
+
+        // Inicializar cálculos al cargar la página
+        document.addEventListener('DOMContentLoaded', (event) => {
+            calcularTotales(); // Asegura que el botón guardar esté deshabilitado si no hay productos
+        });
     </script>
 </body>
 </html>
